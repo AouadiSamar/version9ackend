@@ -45,13 +45,11 @@ ALLOWED_HOSTS = []
 
 # settings.py
 
-# Define a list of origins that are allowed to make cross-origin requests
-CORS_ALLOWED_ORIGINS = [
-    
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
 
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 # Application definition
 
@@ -67,7 +65,7 @@ INSTALLED_APPS = [
 
     'corsheaders',
     'users.apps.UsersConfig',
-    "djoser",
+    'djoser',
 ]
 
 MIDDLEWARE = [
@@ -78,8 +76,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    
     'corsheaders.middleware.CorsMiddleware',
 
 ]
@@ -217,7 +213,6 @@ DJOSER = {
 
 
 
-
 import os
 import environ
 
@@ -238,3 +233,5 @@ DEFAULT_FROM_EMAIL = "info@journal-bullet.com"
 # DOMAIN = env("DOMAIN")  # Remove if not used
 
 SITE_NAME = "Journal Bullet"
+# Allow all domains during development
+CORS_ALLOW_ALL_ORIGINS = True

@@ -1,106 +1,73 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
-from django.utils.translation import gettext_lazy as _
-from .forms import CustomUserChangeForm, CustomUserCreationForm
-from .models import Role, Permission, UserRole
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .serializers import ActivateDeactivateUserSerializer  # Import the serializer
+from .models import * 
 
-# UserAdmin configuration with custom actions for activation/deactivation
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Role, Permission, UserRole
-from .forms import CustomUserChangeForm, CustomUserCreationForm
+from django.utils.translation import gettext_lazy as _
+
+from .models import User, Role, Permission, UserRole, RolePermission, UserActivity
 
 class UserAdmin(BaseUserAdmin):
-    form = CustomUserChangeForm
-    add_form = CustomUserCreationForm
-    model = User
-    list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active',)
-    list_filter = ('email', 'first_name', 'last_name', 'is_staff', 'is_active',)
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('first_name', 'last_name')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'phone_number', 'address', 'expiration_date', 'status')}),
+        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        (_('Important dates'), {'fields': ('last_login',)}),  # 'date_joined' n'est pas nécessaire car généralement géré automatiquement par Django
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'is_staff', 'is_active'),
+            'fields': ('email', 'password1', 'password2'),
         }),
     )
-    search_fields = ('email',)
+    list_display = ('email', 'first_name', 'last_name', 'is_staff')
+    search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
 
-# Register the User model with the custom UserAdmin
-admin.site.register(User, UserAdmin)
-
-
-
-# Admin configurations for other models (Role, Permission, UserRole)
-
+# Admin for Role
 class RoleAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description']
-    search_fields = ['name', 'description']
-    filter_horizontal = ('permissions',)
+    list_display = ('name', 'description')
+    search_fields = ('name',)
 
+# Admin for Permission
 class PermissionAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description']
-    search_fields = ['name', 'description']
+    list_display = ('name', 'description')
+    search_fields = ('name',)
 
+# Admin for UserRole
 class UserRoleAdmin(admin.ModelAdmin):
-    list_display = ['user', 'list_roles']
-    search_fields = ['user__email']
-    filter_horizontal = ('roles',)
+    list_display = ('user_email', 'get_roles')
+    search_fields = ('user__email',)
 
-    def list_roles(self, obj):
+    def user_email(self, obj):
+        return obj.user.email
+
+    def get_roles(self, obj):
         return ", ".join([role.name for role in obj.roles.all()])
 
-    list_roles.short_description = _("Roles")
+# Admin for RolePermission
+class RolePermissionAdmin(admin.ModelAdmin):
+    list_display = ('role_name', 'get_permissions')
+    search_fields = ('role__name',)
 
+    def role_name(self, obj):
+        return obj.role.name
 
-# Register admin models
-admin.site.register(Role)
-admin.site.register(Permission)
-admin.site.register(UserRole)
+    def get_permissions(self, obj):
+        return ", ".join([permission.name for permission in obj.permissions.all()])
 
+# Admin for UserActivity
+class UserActivityAdmin(admin.ModelAdmin):
+    list_display = ('user_email', 'activity', 'timestamp')
+    search_fields = ('user__email', 'activity')
 
+    def user_email(self, obj):
+        return obj.user.email
 
-
-# N'oubliez pas d'enregistrer votre modèle User avec la classe UserAdmin personnalisée
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Registering models with their respective admins
+admin.site.register(User, UserAdmin)
+admin.site.register(Role, RoleAdmin)
+admin.site.register(Permission, PermissionAdmin)
+admin.site.register(UserRole, UserRoleAdmin)
+admin.site.register(RolePermission, RolePermissionAdmin)
+admin.site.register(UserActivity, UserActivityAdmin)
