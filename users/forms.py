@@ -1,6 +1,11 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from .models import Role, User, UserRole  # Assuming your User model is here
+# users/forms.py
+from django import forms
+
+
+# Your form classes here...
 
 class CustomUserCreationForm(UserCreationForm):
   class Meta(UserCreationForm.Meta):

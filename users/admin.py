@@ -6,6 +6,10 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
 from .models import User, Role, Permission, UserRole, RolePermission, UserActivity
+# users/admin.py
+
+
+# Your admin registration here...
 
 class UserAdmin(BaseUserAdmin):
     fieldsets = (

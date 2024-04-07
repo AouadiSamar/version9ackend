@@ -28,3 +28,23 @@ def expire_old_sessions(sender, user, request, **kwargs):
         if last_activity is None or (timezone.now() - last_activity > INACTIVITY_TIMEOUT):
             if session.session_key != current_session_key:
                 session.delete()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# signals.py or views.py within your Django app
+
+

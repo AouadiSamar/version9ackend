@@ -17,26 +17,8 @@ SECRET_KEY = env("SECRET_KEY")
 
 
 
+APPEND_SLASH = False
 
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-
-# Initialize environ
-
-# Reading .env file
-
-# Accessing the environment variable
-
-
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-
-
-# SECURITY WARNING: don't run with debug turned on in production!
 
 
 ALLOWED_HOSTS = []
@@ -44,7 +26,6 @@ ALLOWED_HOSTS = []
 
 
 # settings.py
-
 
 
 CORS_ALLOWED_ORIGINS = [
@@ -112,6 +93,7 @@ DATABASES = {
 }
 
 
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # settings.py
@@ -120,15 +102,12 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 1800  # 30 minutes, en secondes
 SESSION_SAVE_EVERY_REQUEST = True
 
-# settings.py
-
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
+    ),
+  
 }
-
-
 
 
 AUTH_USER_MODEL='users.User'
@@ -185,13 +164,33 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {  # This means all loggers
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+DOMAIN = 'localhost:5173'
+
 DJOSER = {
     'LOGIN_FIELD': 'email',
     "USER_CREATE_PASSWORD_RETYPE": True,
     "USERNAME_CHANGED_EMAIL_CONFIRMATION": True,
     "PASSWORD_CHANGED_EMAIL_CONFIRMATION": True,
     "SEND_CONFIRMATION_EMAIL": True,
-    "PASSWORD_RESET_CONFIRM_URL": "password/reset/confirm/{uid}/{token}",
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
     "SET_PASSWORD_RETYPE": True,
     "PASSWORD_RESET_CONFIRM_RETYPE": True,
     'USERNAME_RESET_CONFIRM_URL': 'username/reset/confirm/{uid}/{token}',
@@ -200,9 +199,9 @@ DJOSER = {
     'SERIALIZERS': {
         'user_create': 'users.serializers.CreateUserSerializer',
         'user': "users.serializers.CreateUserSerializer",
-        'user_delete': "djoser.serializers.UserDeleteSerializer",      
-    },
-}
+        'current_user': 'users.serializers.UserSerializer',
+
+        'user_delete': "djoser.serializers.UserDeleteSerializer", },}
 
 
 
@@ -212,26 +211,42 @@ DJOSER = {
 
 
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'samaraouadi7@gmail.com'  
+EMAIL_HOST_PASSWORD = 'becp kzjj gfug gsju'  
+EMAIL_USE_TLS = True
+
+EMAIL_PORT = 587  
 
 import os
 import environ
-
-# Assuming you have python-dotenv installed
 env = environ.Env()
-env.read_env()  # Read environment variables from .env file
+env.read_env()  
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+SITE_NAME = "Paymee"
 
-EMAIL_HOST = env('EMAIL_HOST')
-EMAIL_USE_TLS = True
-EMAIL_PORT = env.int('EMAIL_PORT')
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = "info@journal-bullet.com"
 
-# Remove if not used
-# DOMAIN = env("DOMAIN")  # Remove if not used
 
-SITE_NAME = "Journal Bullet"
-# Allow all domains during development
-CORS_ALLOW_ALL_ORIGINS = True
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

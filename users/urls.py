@@ -1,13 +1,20 @@
 from django.urls import path
 from . import views
-from .views import ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView,UserDeleteView,ToggleUserActiveStatus
+from .views import  SendResetEmailView, ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView,UserDeleteView,ToggleUserActiveStatus
+
 
 
 urlpatterns = [
+
+
+
+
+
+    
     # URL pour la vue qui liste les sessions actives
     path('active-sessions/', views.active_sessions, name='active_sessions'),
+    path('send-reset-email/', SendResetEmailView.as_view(), name='send_reset_email'),
 
-    # URL pour la vue qui permet de terminer une session spécifique
     path('terminate-session/<str:session_key>/', views.terminate_session, name='terminate_session'),
 
     # URL pour la vue qui permet de mettre à jour le profil de l'utilisateur
@@ -24,10 +31,12 @@ urlpatterns = [
 
 
 
+    path('profile/', UserDetailView.as_view(), name='user-profile'),
 
     path('users/', UserListView.as_view(), name='user-list'),
-    path('users/update/<int:pk>/', UserUpdateView.as_view(), name='user-update'),
+    path('update/<int:pk>/', UserUpdateView.as_view(), name='user-update'),
     path('roles/', RoleListView.as_view(), name='role-list'),
 
 
     path('rolesc/', RoleCreateView.as_view(), name='role-crer'),]
+

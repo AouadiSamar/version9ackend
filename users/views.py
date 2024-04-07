@@ -18,7 +18,6 @@ class UserView(views.APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-from django.contrib.auth.decorators import login_required
 from django.contrib.messages import success
 
 
@@ -26,15 +25,11 @@ from django.contrib.messages import success
 
 from django.contrib.sessions.models import Session
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.contrib.sessions.models import Session
 from django.utils import timezone
 
-@login_required
 def active_sessions(request):
     sessions = Session.objects.filter(expire_date__gte=timezone.now())
     active_sessions = []
@@ -52,10 +47,8 @@ def active_sessions(request):
 from django.shortcuts import redirect
 
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.contrib.sessions.models import Session
 
-@login_required
 def terminate_session(request, session_key):
     response = {'status': 'failed', 'message': 'Session not found.'}
     if request.method == 'POST':  # Assurez-vous que la requête est une requête POST
@@ -76,13 +69,11 @@ def terminate_session(request, session_key):
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.contrib.auth.decorators import login_required
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -106,6 +97,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from .serializers import UserSerializer  # Assuming your serializer is in a file named serializers.py
 class ProfileView(APIView):
+  
 
   def get(self, request):
     user = request.user
@@ -118,6 +110,62 @@ class ProfileView(APIView):
       serializer.save()
       return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+  
+
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.contrib.auth.models import User
+from rest_framework import status
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import User
+
+from django.contrib.auth.models import User
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.models import User
+from rest_framework import status
+
+
+        # La suite de votre logique...
+
+
+
+
+
+from django.contrib.auth.models import User
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 from django.shortcuts import render
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -125,9 +173,50 @@ from rest_framework.response import Response
 from .models import User  # Importation correcte du modèle utilisateur personnalisé
 from users.serializers import RoleSerializer, UserSerializer
 
-class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+from rest_framework.permissions import IsAuthenticated
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import User
+from .serializers import UserSerializer
+
+class UserListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from .models import User  # Assurez-vous d'importer votre modèle User
+from .serializers import UserSerializer  # Assurez-vous d'importer le bon serializer
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, format=None):
+        try:
+            # L'utilisateur est déjà authentifié et son instance est disponible via `request.user`
+            user = request.user
+            if not user:
+                raise AuthenticationFailed('Utilisateur non trouvé')
+                
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except AuthenticationFailed as e:
+            return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
@@ -136,29 +225,33 @@ from rest_framework.response import Response
 from .serializers import UserSerializer
 from .models import User
 
-class UserUpdateView(UpdateAPIView):
+class UserUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    http_method_names = ['put']  # Only allow PUT requests
 
-def put(self, request, *args, **kwargs):
-        try:
-            serializer = self.get_serializer(self.get_object(), data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-class UserDetailView(RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    http_method_names = ['get']  # Only allow GET requests
+    # If needed, override the update method or perform any additional logic here
 
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(data=request.data, instance=self.get_object(), partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(serializer.instance, '_prefetched_objects_cache', None):
+            # we need to invalidate the prefetch cache on the instance.
+            serializer.instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
 
 
 class UserCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -231,6 +324,8 @@ from .models import User
 from .serializers import UserSerializer
 
 class UserDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, *args, **kwargs):
         pk = kwargs.get('pk')
         user = get_object_or_404(User, pk=pk)
@@ -267,15 +362,17 @@ from .serializers import RoleSerializer
 # from rest_framework import permissions
 
 class RoleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
+    # permission_classes = [permissions.IsAuthenticated] # Assurez-vous que ceci est approprié pour votre cas d'usage
 
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-# In your Django app's views.py
 from rest_framework.generics import ListAPIView
 
 
@@ -350,6 +447,8 @@ from .models import Role
 from rest_framework import generics, permissions, serializers
 
 class RoleDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
 
@@ -360,4 +459,108 @@ class RoleDetailView(generics.RetrieveAPIView):
         context = super().get_serializer_context()
         context['users'] = self.get_object().users.all()
         return context
+
+
+
+from django.contrib.auth import get_user_model
+from rest_framework import generics, permissions
+from rest_framework.response import Response
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import NotAuthenticated
+
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+
+from rest_framework.exceptions import PermissionDenied
+
+
+
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+
+# Generate Token Manually
+def get_tokens_for_user(user):
+  refresh = RefreshToken.for_user(user)
+  return {
+      'refresh': str(refresh),
+      'access': str(refresh.access_token),
+  }
+
+
+
+
+
+
+
+
+
+
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from django.views import View
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from users.models import User  # Make sure this points to your User model
+
+class SendResetEmailView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email=email).first()
+        if user:
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            reset_link = f"http://localhost:5173/reset-password-form/{uid}/{token}"
+
+            subject = "Reset Your Password :Paymee"
+            message = f"You're receiving this email because you requested a password reset for your user account at Paymee.Please go to the following page and choose a new password:{reset_link}"
+            from_email = settings.EMAIL_HOST_USER
+            recipient_list = [email]
+
+            try:
+                send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+                return Response({"message": "Reset password email sent successfully."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": f"Failed to send email. Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
+
+
+
+
+
 

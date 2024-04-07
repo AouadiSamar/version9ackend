@@ -136,3 +136,6 @@ class UserActivity(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.activity} - {self.timestamp}"
+    
+
+

@@ -95,6 +95,8 @@ from .models import User, Role
 from rest_framework import serializers
 from .models import User, Role
 
+from rest_framework import permissions 
+
 
 class UserSerializer(serializers.ModelSerializer):
     role_names = serializers.SerializerMethodField()
@@ -102,9 +104,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'phone_number', 'address', 'is_staff', 'is_active', 'creation_date', 'expiration_date', 'status', 'roles', 'role_names']
+        permissions_classes = [permissions.IsAuthenticated]
 
     def get_role_names(self, obj):
         return [role.name for role in obj.roles.all()]
+    
 
     def create(self, validated_data):
         roles_data = validated_data.pop('roles', [])
@@ -122,3 +126,18 @@ class UserSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+    
+
+
+
+
+    # serializers.py
+# serializers.py
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from rest_framework import serializers
+
+User = get_user_model()
+
+
+
