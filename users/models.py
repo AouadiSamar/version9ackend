@@ -64,13 +64,15 @@ class Role(models.Model):
 
     def __str__(self):
         return self.name
-
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_("Email Address"), unique=True)
     first_name = models.CharField(_("First Name"), max_length=100)
     last_name = models.CharField(_("Last Name"), max_length=100)
-    phone_number = models.CharField(_("Phone Number"), max_length=20,  null=True,blank=True)
+    phone_number = models.CharField(_("Phone Number"), max_length=20, null=True, blank=True)
     address = models.CharField(_("Address"), max_length=255, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -78,7 +80,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     creation_date = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=100, blank=True, null=True, default='active')
-    date_joined = models.DateTimeField(_("Date Joined"), default=now)  # Added this line
+    date_joined = models.DateTimeField(_("Date Joined"), default=timezone.now)
 
     objects = UserManager()
 
@@ -95,6 +97,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    def set_password(self, raw_password):
+        """
+        Hashes the user's password securely using a suitable hashing algorithm.
+        You should never store plain text passwords in production.
+        """
+        self.password = make_password(raw_password)
+
+
 
 
 # Other models (UserRole, RolePermission, UserActivity) remain unchanged

@@ -94,23 +94,20 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from .models import Role  # Ajustez l'import selon votre modèle de rôle
 
-from .serializers import UserSerializer  # Assuming your serializer is in a file named serializers.py
-class ProfileView(APIView):
-  
+class ProfileView(serializers.ModelSerializer):
+    role_names = serializers.SerializerMethodField()
 
-  def get(self, request):
-    user = request.user
-    serializer = UserSerializer(user)
-    return Response(serializer.data)
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'phone_number', 'address', 'role_names']  # Ajustez selon vos champs
 
-  def post(self, request):
-    serializer = UserSerializer(request.user, data=request.data)
-    if serializer.is_valid():
-      serializer.save()
-      return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-  
+    def get_role_names(self, obj):
+        return [role.name for role in obj.roles.all()]  # Assurez-vous que 'roles' est le nom de la relation dans votre modèle User
+
 
 
 
@@ -248,20 +245,36 @@ class UserUpdateView(generics.UpdateAPIView):
         return Response(serializer.data)
 
 
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.urls import reverse_lazy
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-class UserCreateView(generics.CreateAPIView):
+from .serializers import UserSerializer
+
+User = get_user_model()
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import UserSerializer  # Assurez-vous que le chemin d'importation est correct
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
+class UserCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-def create(self, request, *args, **kwargs):
-    serializer = self.get_serializer(data=request.data)
-    if not serializer.is_valid():
+    def post(self, request, *args, **kwargs):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()  # La méthode save appelle create dans le serializer
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    self.perform_create(serializer)
-    headers = self.get_success_headers(serializer.data)
-    return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
 
 
 

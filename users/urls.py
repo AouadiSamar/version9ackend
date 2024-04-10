@@ -18,7 +18,7 @@ urlpatterns = [
     path('terminate-session/<str:session_key>/', views.terminate_session, name='terminate_session'),
 
     # URL pour la vue qui permet de mettre à jour le profil de l'utilisateur
-    path('profile/update', ProfileView.as_view(), name='profile'),
+    path('profile/update', ProfileView, name='profile'),
 
     path('', UserView.as_view(), name='users'),
 
