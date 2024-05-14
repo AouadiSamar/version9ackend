@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "@date-io/date-fns": "^3.0.0",
+    "@mui/lab": "^5.0.0-alpha.170",
     "prop-types": "^15.8.1",
+    "react-datepicker": "^6.9.0",
     "react-router-dom": "^6.22.3"
   }
 }

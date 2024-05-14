@@ -108,7 +108,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 
-# Other models (UserRole, RolePermission, UserActivity) remain unchanged
 
 
 

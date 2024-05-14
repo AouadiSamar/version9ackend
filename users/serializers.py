@@ -37,6 +37,12 @@ def deactivate_user(user_id):
         
 
 
+from rest_framework import serializers
+
+class ResetPasswordConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
 
 from .models import User  # Assuming your User model is here
 

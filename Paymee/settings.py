@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "rest_framework_simplejwt",
     'rest_framework',
+    'chargebacks.apps.ChargebacksConfig',
+    'rembourssement.apps.RembourssementConfig',
 
     'corsheaders',
     'users.apps.UsersConfig',
@@ -93,7 +95,6 @@ DATABASES = {
 }
 
 
-CORS_ALLOW_ALL_ORIGINS = True
 
 
 # settings.py
@@ -211,7 +212,7 @@ DJOSER = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'samaraouadi7@gmail.com'  
-EMAIL_HOST_PASSWORD = 'becp kzjj gfug gsju'  
+EMAIL_HOST_PASSWORD = 'gfhg ymzi bjmw hyfi'  
 EMAIL_USE_TLS = True
 
 EMAIL_PORT = 587  
@@ -227,13 +228,25 @@ SITE_NAME = "Paymee"
 
 
 
+MEDIA_URL = '/media/'
+
+
+CORS_ALLOW_ALL_ORIGINS =True  # Not recommended for production
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 
-
-
-
-
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 
 

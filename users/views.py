@@ -20,6 +20,23 @@ class UserView(views.APIView):
 
 from django.contrib.messages import success
 
+from django.contrib.auth import authenticate, login
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework import status
+
+# # class VoiceLoginView(APIView):
+# #     permission_classes = [AllowAny]
+
+# #     def post(self, request):
+# #         username = request.data.get('username')
+# #         password = request.data.get('password')  # This should come securely, possibly not through voice
+# #         user = authenticate(username=username, password=password)
+# #         if user is not None:
+# #             login(request, user)
+#             return Response({"message": "User logged in successfully"}, status=status.HTTP_200_OK)
+#         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 # Import your custom forms (assuming they are in the same directory)
 
@@ -140,7 +157,6 @@ from rest_framework import status
 
 
 
-from django.contrib.auth.models import User
 
 
 
@@ -196,23 +212,23 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
+from django.http import Http404
+
+from django.contrib.auth.models import User
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import UserSerializer
+
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def get(self, request, format=None):
-        try:
-            # L'utilisateur est déjà authentifié et son instance est disponible via `request.user`
-            user = request.user
-            if not user:
-                raise AuthenticationFailed('Utilisateur non trouvé')
-                
-            serializer = UserSerializer(user)
-            return Response(serializer.data)
-        except AuthenticationFailed as e:
-            return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Access the user from the request
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
 
 
 
@@ -353,8 +369,28 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import User
 
+
+
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAdminUser
+
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
+
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
+from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
+from rest_framework.permissions import IsAuthenticated
+
 class ToggleUserActiveStatus(APIView):
-    def patch(self, request, user_id):
+    def patch(self, request, user_id):  # Make sure 'user_id' matches URL conf
         user = get_object_or_404(User, id=user_id)
         user.is_active = not user.is_active
         user.save()
@@ -538,6 +574,58 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from users.models import User  # Make sure this points to your User model
 
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
+from rest_framework import views, status
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import AllowAny
+from .serializers import ResetPasswordConfirmSerializer
+
+
+from django.contrib.auth import get_user_model
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import get_user_model
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+
+User = get_user_model()
+
+class ResetPasswordConfirm(APIView):
+    def post(self, request):
+        uidb64 = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+
+        if not all([uidb64, token, new_password]):
+            return Response({"error": "Missing data"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError):
+            return Response({"error": "Invalid UID"}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"error": "Invalid token or token expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
+
+
 class SendResetEmailView(APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
@@ -577,3 +665,24 @@ class SendResetEmailView(APIView):
 
 
 
+
+
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAdminUser
+
+User = get_user_model()
+
+class ToggleUserActiveStatusAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            user.is_active = not user.is_active  # Basculer l'état actif
+            user.save()
+            return Response({'status': 'success', 'is_active': user.is_active})
+        except User.DoesNotExist:
+            return Response({'status': 'error', 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)

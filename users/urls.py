@@ -1,8 +1,9 @@
 from django.urls import path
 from . import views
-from .views import  SendResetEmailView, ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView,UserDeleteView,ToggleUserActiveStatus
+from .views import ResetPasswordConfirm, SendResetEmailView, ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView
 
 
+from .views import ToggleUserActiveStatus
 
 urlpatterns = [
 
@@ -11,21 +12,20 @@ urlpatterns = [
 
 
     
-    # URL pour la vue qui liste les sessions actives
     path('active-sessions/', views.active_sessions, name='active_sessions'),
     path('send-reset-email/', SendResetEmailView.as_view(), name='send_reset_email'),
 
     path('terminate-session/<str:session_key>/', views.terminate_session, name='terminate_session'),
 
-    # URL pour la vue qui permet de mettre à jour le profil de l'utilisateur
     path('profile/update', ProfileView, name='profile'),
 
     path('', UserView.as_view(), name='users'),
+    path('reset-password-confirm/', ResetPasswordConfirm.as_view(), name='reset_password_confirm'),
 
-    path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
-# Dans urls.py
-    path('usersd/<int:pk>/', UserDeleteView.as_view(), name='user-delete'),
-    path('users/<int:user_id>/toggle_active/', ToggleUserActiveStatus.as_view(), name='toggle_user_active'),
+    path('<int:pk>/', UserDetailView.as_view(), name='user-detail'),
+
+    path('<int:user_id>/toggle-active/', ToggleUserActiveStatus.as_view(), name='toggle-user-active'),
+
     path('permissions/', PermissionListView.as_view(), name='permission-list'),
     path('usersc/', UserCreateView.as_view(), name='user-create'),
 
