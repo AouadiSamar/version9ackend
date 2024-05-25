@@ -3,8 +3,7 @@ from .views import ChargebackCreateView,AssignChargebackView, CommentView, Charg
 from .views import  ChargebackStatusUpdateView,ChargebackLogsView
 from .views import ChargebackLogsView ,delete_file,download_file
 
-from .views import ToggleActiveStatus
-
+from .views import ToggleActiveStatus,PredictResolutionTimeView
 # urls.py
 from django.urls import path
 from .views import FileUploadView, FileDetailView
@@ -17,17 +16,19 @@ from django.urls import path
 
 from django.urls import path
 urlpatterns = [   
-     path('chargebacks/<int:pk>/ac_des/', ToggleActiveStatus.as_view(), name='toggle-active-status'),
+    path('chargebacks/<int:chargeback_id>/ac_des/', ToggleActiveStatus.as_view(), name='toggle-chargeback-active'),
     # path('chargebacks/<int:chargeback_id>/send-email/', send_email_to_merchant, name='send-email-to-merchant'),
+    path('chargebacks/predict_resolution_time/', PredictResolutionTimeView.as_view(), name='predict-resolution-time'),
 
+    path('chargebacks/<int:chargeback_id>/comments', CommentView.as_view(), name='chargeback-comments'),
+    path('comments/<int:comment_id>/', CommentView.as_view()),  
 
     path('chargebacks/', ChargebackCreateView.as_view(), name='chargeback-create'),
-    path('chargebacks/<int:chargeback_id>/comments', CommentView.as_view(), name='chargeback-comments'),
     path('chargebacks/<int:pk>/assign/', AssignChargebackView.as_view(), name='assign-chargeback'),
     path('chargebacks/<int:pk>/update-status/',  ChargebackStatusUpdateView.as_view(), name='update-chargeback-status'),
     path('files/download/<int:file_id>/', download_file, name='file-download'),
 
-    path('chargebacks/list/', ChargebackListView.as_view(), name='chargeback-list'),
+path('chargebacks/list/', ChargebackListView.as_view(), name='chargeback-list'),
     path('chargebacks/<int:pk>/edit/', ChargebackUpdateView.as_view(), name='chargeback-update'),
     path('files/<int:pk>/delete/', delete_file, name='delete-file'),
 

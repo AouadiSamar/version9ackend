@@ -290,7 +290,27 @@ class UserCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UserUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
 
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    # If needed, override the update method or perform any additional logic here
+
+
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(data=request.data, instance=self.get_object(), partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(serializer.instance, '_prefetched_objects_cache', None):
+            # we need to invalidate the prefetch cache on the instance.
+            serializer.instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 
 
@@ -403,6 +423,27 @@ from .models import Role
 from .serializers import RoleSerializer
 
 
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from .facerecognition import recognize_faces  # Import your face recognition logic
+
+@api_view(['POST'])
+def recognize_faces_api(request):
+    """
+    API endpoint for face recognition.
+    Expects an image file in the request data.
+    """
+    if 'image' not in request.FILES:
+        return JsonResponse({'error':"" 'No image file found'}, status=400)
+
+    image_file = request.FILES['image']
+
+    # Call your face recognition logic to process the image
+    # Replace recognize_faces with your actual function
+    faces = recognize_faces(image_file)
+
+    # Assuming faces is a list of recognized face names or IDs
+    return JsonResponse({'faces': faces})
 
 
 from rest_framework import generics

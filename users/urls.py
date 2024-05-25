@@ -8,6 +8,7 @@ from .views import ToggleUserActiveStatus
 urlpatterns = [
 
 
+    path('recognize-faces/', views.recognize_faces_api, name='recognize_faces_api'),
 
 
 

@@ -214,6 +214,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'samaraouadi7@gmail.com'  
 EMAIL_HOST_PASSWORD = 'gfhg ymzi bjmw hyfi'  
 EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'samaraouadi7@gmail.com'
 
 EMAIL_PORT = 587  
 

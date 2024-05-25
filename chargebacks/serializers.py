@@ -108,21 +108,26 @@ from .models import Comment
 from users.models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['first_name', 'last_name', 'email']  # Adjust fields as necessary
+
+
+from rest_framework import serializers
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    first_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
+    last_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
 
     class Meta:
         model = Comment
-        fields = ['id', 'text', 'user', 'creation_date']
+        fields = ['id', 'text', 'chargeback', 'user','last_name' ,'first_name']  # Inclure le champ user_name
 
 
 
 from rest_framework import serializers
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Chargeback
 
 
 
@@ -133,16 +138,10 @@ class ChargebackSerializer(serializers.ModelSerializer):
     
     assigned_to = UserSerializer(read_only=True)
 
+
     class Meta:
         model = Chargeback
-        fields = [
-            'id', 'title', 'description', 'authorization_number', 'amount', 
-            'merchant_number', 'merchant_email', 'merchant_name', 'status', 
-            'reason', 'creation_date', 'modification_date', 'created_by',
-            'assigned_to','files'
-        ]
-
-
+        fields = '__all__'
     def save(self, **kwargs):
         # Check if request is available in context and has an authenticated user
         request = self.context.get('request')

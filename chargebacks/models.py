@@ -5,16 +5,22 @@ from django.conf import settings
 
 
 class Chargeback(models.Model):
-    is_active = models.BooleanField(default=True)
 
 
     title = models.CharField(max_length=100)
     description = models.TextField()
     authorization_number = models.CharField(_("Authorization Number"), max_length=255,null=True,  blank=False,unique=True)
     amount = models.DecimalField(_("Amount"), max_digits=10, unique=True, null=True,decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    creation_date = models.DateTimeField(_("Creation Date"), default=timezone.now)
+    status = models.CharField(max_length=100)
+
+
+
     merchant_number = models.CharField(_("Merchant Number"), null=True,max_length=255)
     merchant_email = models.EmailField(_("Merchant Email"),unique=True,null=True)
     merchant_name = models.CharField(_("Merchant Name"), null=True,max_length=255)
+
 
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -36,12 +42,11 @@ class Chargeback(models.Model):
         ('reactivate', _('Reactivate')),
 
 
-    ]
+    ]    
 
-    status = models.CharField(_("Status"), max_length=100, choices=STATUS_CHOICES, null=True)
+    status = models.CharField(_("Status"), max_length=100, choices=STATUS_CHOICES,  default='created')
     
     reason = models.TextField(_("Reason"),null=True)
-    creation_date = models.DateTimeField(_("Creation Date"), default=timezone.now)
     modification_date = models.DateTimeField(_("Modification Date"), auto_now=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, on_delete=models.CASCADE, related_name='created_chargebacks')
 
@@ -58,24 +63,21 @@ class Chargeback(models.Model):
     
  
 
-from django.db import models
-
-
-
-
-from django.db import models
-from django.conf import settings
 
 from users.models import User
+from django.db import models
+from users.models import User
+
 class Comment(models.Model):
     text = models.TextField()
-    creation_date = models.DateTimeField(auto_now_add=True)  # Automatically set the field to now when the object is first created.
+    chargeback = models.ForeignKey(Chargeback, on_delete=models.CASCADE)
+    user = models.ForeignKey(User,null=True, on_delete=models.CASCADE)  # Utiliser le modèle User de Django
 
-    chargeback = models.ForeignKey(Chargeback, related_name='comments', on_delete=models.CASCADE)
-    user = models.ForeignKey(User,null=True,on_delete=models.CASCADE) 
+    # Ajouter des champs pour stocker le prénom et le nom de famille de l'utilisateur
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
 
-    def __str__(self):
-        return self.text[:50]
+
 
 
 

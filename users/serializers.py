@@ -38,6 +38,13 @@ def deactivate_user(user_id):
 
 
 from rest_framework import serializers
+from rest_framework import serializers
+
+class ImageUploadSerializer(serializers.Serializer):
+    """
+    Serializer for handling image uploads.
+    """
+    image = serializers.ImageField()
 
 class ResetPasswordConfirmSerializer(serializers.Serializer):
     uid = serializers.CharField(required=True)

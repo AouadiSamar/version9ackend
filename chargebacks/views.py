@@ -277,9 +277,29 @@ from rest_framework.response import Response
 
 
 
+import joblib
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import joblib
+import os
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
+import joblib
+import os
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
 
-
-
+import joblib
+import os
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
 
 
 import logging
@@ -297,8 +317,92 @@ def update(self, request, *args, **kwargs):
     serializer.is_valid(raise_exception=True)
     self.perform_update(serializer)
     return Response(serializer.data)
+import os
+import joblib
+import pandas as pd
+import matplotlib.pyplot as plt
+import logging
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
+from django.http import FileResponse
+from io import BytesIO
 
-    
+logger = logging.getLogger(__name__)
+
+class PredictResolutionTimeView(APIView):
+    def post(self, request):
+        model_path = os.path.join(settings.BASE_DIR, 'models', 'chargeback_resolution_model.pkl')
+        logger.debug(f"Model path: {model_path}")
+        try:
+            if not os.path.exists(model_path):
+                logger.error(f"Model file not found at path: {model_path}")
+                return Response({'error': 'Model file not found'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            model = joblib.load(model_path)
+            data = request.data
+            logger.debug(f"Data received: {data}")
+            
+            # Sélection des colonnes nécessaires pour la prédiction
+            columns = ['authorization_number', 'amount', 'status', 'reason']
+            input_data = {col: data[col] for col in columns if col in data}
+            
+            # Transformation des données en DataFrame
+            df = pd.DataFrame([input_data])
+            
+            # Assurez-vous que les colonnes sont encodées de la même manière que lors de l'entraînement
+            df['status_encoded'] = df['status'].map({
+                'created': 0,
+                'sent_to_merchant': 1,
+                'processing_by_paymee': 2,
+                'processing_by_bank': 3,
+                'won': 4,
+                'lost': 5,
+                'desactivated': 6,
+                'reactivate': 7
+            })
+            df['reason_encoded'] = df['reason'].map({
+                'Customer dispute': 0,
+                'Fraud': 1,
+                'Technical issue': 2
+            })
+            df = df[['authorization_number', 'amount', 'status_encoded', 'reason_encoded']]
+            
+            # Prédiction
+            prediction = model.predict(df)
+            logger.debug(f"Prediction: {prediction[0]}")
+
+            # Générer la courbe de régression
+            X_train = pd.read_csv('X_train.csv')
+            y_train = pd.read_csv('y_train.csv')
+
+            plt.figure(figsize=(10, 6))
+            plt.scatter(X_train['amount'], y_train, color='blue', label='Training Data', alpha=0.5)
+            plt.scatter(df['amount'], prediction, color='red', label='Prediction')
+            plt.xlabel('Amount')
+            plt.ylabel('Resolution Time (days)')
+            plt.title(f'Regression Model Prediction\nPredicted Resolution Time: {prediction[0]:.2f} days')
+            plt.legend()
+
+            # Sauvegarder la courbe en tant qu'image
+            buffer = BytesIO()
+            plt.savefig(buffer, format='png')
+            buffer.seek(0)
+            
+            response = FileResponse(buffer, content_type='image/png', as_attachment=True, filename='prediction_plot.png')
+            response['predicted_resolution_time_days'] = prediction[0]
+            return response
+        
+        except FileNotFoundError:
+            logger.error('Model file not found exception')
+            return Response({'error': 'Model file not found'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            logger.error(f"An error occurred: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
@@ -370,45 +474,72 @@ class ChargebackDetailView(APIView):
    
 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import CommentSerializer
+from django.contrib.auth.models import User  # Importer le modèle d'utilisateur Django
 
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Comment
+from .serializers import CommentSerializer
+from rest_framework import status
+
+from django.contrib.auth.models import User
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Comment
+from .serializers import CommentSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Comment
+from .serializers import CommentSerializer
 class CommentView(APIView):
-
     def get(self, request, chargeback_id):
         comments = Comment.objects.filter(chargeback_id=chargeback_id)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
     
-
     def post(self, request, chargeback_id):
-        print("Received data:", request.data)
         serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
         if serializer.is_valid():
-            comment = serializer.save()
+            user = request.user
+            serializer.validated_data['first_name'] = user.first_name
+            serializer.validated_data['last_name'] = user.last_name
+            serializer.validated_data['chargeback_id'] = chargeback_id
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            print("Errors:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id)
+            serializer = CommentSerializer(comment, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Comment.DoesNotExist:
+            return Response({"message": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id)
+            comment.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Comment.DoesNotExist:
+            return Response({"message": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+        
+   
 
 
     
    
-
-
-
-
-    
-
-class AssignChargebackView(APIView):
-    def patch(self, request, pk):
-        chargeback = Chargeback.objects.get(pk=pk)
-        user_id = request.data.get('assigned_to')
-        if user_id:
-            chargeback.assigned_to_id = user_id
-            chargeback.save(update_fields=['assigned_to'])
-            return Response({"status": "Chargeback assigned successfully."}, status=status.HTTP_200_OK)
-        return Response({"error": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 class ChargebackStatusUpdateView(APIView):
     def patch(self, request, pk):
@@ -480,20 +611,27 @@ class FileDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FileSerializer
 
 
+# views.py
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import Chargeback
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import Chargeback
 
 class ToggleActiveStatus(APIView):
-    """
-    API view to toggle the active status of a Chargeback instance.
-    """
-    def patch(self, request, pk):
-        chargeback = get_object_or_404(Chargeback, pk=pk)
-        print(f"Original is_active status: {chargeback.is_active}")  # Log original status
+    def patch(self, request, chargeback_id):
+        chargeback = get_object_or_404(Chargeback, id=chargeback_id)
         chargeback.is_active = not chargeback.is_active
-        chargeback.save(update_fields=['is_active'])
-        print(f"Updated is_active status: {chargeback.is_active}")  # Log updated status
-        serializer = ChargebackSerializer(chargeback, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+        chargeback.save()
+        print(f"Chargeback {chargeback.id} new is_active status: {chargeback.is_active}")
+        return Response({"success": True, "is_active": chargeback.is_active}, status=status.HTTP_200_OK)
 
 
 def download_file(request, file_id):
@@ -531,3 +669,50 @@ def delete_file(request, pk):
 #         return JsonResponse({'message': 'Email sent successfully!'}, status=200)
 #     except Chargeback.DoesNotExist:
 #         return JsonResponse({'error': 'Chargeback not found'}, status=404)
+
+import logging
+from django.core.mail import send_mail
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from .models import Chargeback, User  # Assurez-vous d'importer les modèles nécessaires
+
+import logging
+from django.core.mail import send_mail
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from .models import Chargeback, User
+
+logger = logging.getLogger(__name__)
+
+class AssignChargebackView(APIView):
+    def patch(self, request, pk):
+        chargeback = get_object_or_404(Chargeback, pk=pk)
+        user_id = request.data.get('assigned_to')
+        if user_id:
+            chargeback.assigned_to_id = user_id
+            chargeback.save(update_fields=['assigned_to'])
+
+            user = User.objects.get(pk=user_id)
+            subject = "New Chargeback Assigned"
+            message = f"Dear {user.first_name},\n\nYou have been assigned a new chargeback with ID {chargeback.id}."
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [user.email]
+
+            try:
+                logger.debug(f"Sending email to {user.email}")
+                send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+                logger.debug("Email sent successfully")
+                return Response({"status": "Chargeback assigned successfully and email sent."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(f"Failed to send email: {str(e)}")
+                return Response({"error": f"Failed to send email. Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
