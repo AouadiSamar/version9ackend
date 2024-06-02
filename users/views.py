@@ -151,7 +151,6 @@ from django.contrib.auth.models import User
 from rest_framework import status
 
 
-        # La suite de votre logique...
 
 
 
@@ -161,10 +160,73 @@ from rest_framework import status
 
 
 
+import random
+from django.contrib.auth import authenticate
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.models import update_last_login
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import User  # Assurez-vous d'importer votre modèle User
 
+def send_verification_email(to_email, code):
+    subject = 'Votre code de vérification'
+    message = f'Votre code de vérification est {code}.'
+    email_from = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [to_email]
+    send_mail(subject, message, email_from, recipient_list)
 
+@api_view(['POST'])
+def login_with_2fa(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+    user = authenticate(request, email=email, password=password)
+    if user is not None:
+        # Générer un code secret à 6 chiffres
+        secret_code = random.randint(100000, 999999)
 
+        # Envoyer le code secret par email
+        try:
+            send_verification_email(user.email, secret_code)
+        except Exception as e:
+            return JsonResponse({'error': f"Erreur lors de l'envoi de l'email: {str(e)}"}, status=500)
 
+        # Stocker le code secret dans la session
+        request.session['secret_code'] = str(secret_code)
+        request.session['user_id'] = user.id
+        request.session.modified = True  # Assurez-vous que la session est sauvegardée
+        print(f"Code de vérification généré : {secret_code}")  # Debugging
+        print(f"Session data after save: {request.session.items()}")  # Debugging
+
+        response = JsonResponse({'message': 'Code de vérification envoyé'}, status=200)
+        response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='Lax')  # Set session cookie explicitly
+
+        return response
+    return JsonResponse({'error': 'Invalid credentials'}, status=400)
+@api_view(['POST'])
+def verify_2fa(request):
+    secret_code = request.data.get('secret_code')
+    stored_code = request.session.get('secret_code')
+    print(f"Code de vérification soumis : {secret_code}")  # Debugging
+    print(f"Code de vérification stocké : {stored_code}")  # Debugging
+    print(f"Session data at verify: {request.session.items()}")  # Debugging
+    print(f"Cookies: {request.COOKIES}")  # Debugging
+
+    if secret_code == stored_code:
+        user_id = request.session.get('user_id')
+        user = User.objects.get(id=user_id)
+
+        # Générer et retourner les tokens JWT
+        refresh = RefreshToken.for_user(user)
+        update_last_login(None, user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
+    return Response({'error': 'Invalid verification code'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -425,25 +487,6 @@ from .serializers import RoleSerializer
 
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
-from .facerecognition import recognize_faces  # Import your face recognition logic
-
-@api_view(['POST'])
-def recognize_faces_api(request):
-    """
-    API endpoint for face recognition.
-    Expects an image file in the request data.
-    """
-    if 'image' not in request.FILES:
-        return JsonResponse({'error':"" 'No image file found'}, status=400)
-
-    image_file = request.FILES['image']
-
-    # Call your face recognition logic to process the image
-    # Replace recognize_faces with your actual function
-    faces = recognize_faces(image_file)
-
-    # Assuming faces is a list of recognized face names or IDs
-    return JsonResponse({'faces': faces})
 
 
 from rest_framework import generics

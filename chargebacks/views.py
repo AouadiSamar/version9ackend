@@ -19,7 +19,7 @@ from .models import Chargeback
 
 
 from django.core.mail import send_mail
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from .models import Chargeback
 from rest_framework.permissions import IsAuthenticated
 
@@ -670,49 +670,95 @@ def delete_file(request, pk):
 #     except Chargeback.DoesNotExist:
 #         return JsonResponse({'error': 'Chargeback not found'}, status=404)
 
-import logging
-from django.core.mail import send_mail
-from django.conf import settings
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from .models import Chargeback, User  # Assurez-vous d'importer les modèles nécessaires
 
-import logging
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from .models import Chargeback, User
+from users.models import User
+import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AssignChargebackView(APIView):
     def patch(self, request, pk):
-        chargeback = get_object_or_404(Chargeback, pk=pk)
+        chargeback = Chargeback.objects.get(pk=pk)
         user_id = request.data.get('assigned_to')
         if user_id:
             chargeback.assigned_to_id = user_id
             chargeback.save(update_fields=['assigned_to'])
-
-            user = User.objects.get(pk=user_id)
-            subject = "New Chargeback Assigned"
-            message = f"Dear {user.first_name},\n\nYou have been assigned a new chargeback with ID {chargeback.id}."
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [user.email]
-
-            try:
-                logger.debug(f"Sending email to {user.email}")
-                send_mail(subject, message, from_email, recipient_list, fail_silently=False)
-                logger.debug("Email sent successfully")
-                return Response({"status": "Chargeback assigned successfully and email sent."}, status=status.HTTP_200_OK)
-            except Exception as e:
-                logger.error(f"Failed to send email: {str(e)}")
-                return Response({"error": f"Failed to send email. Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"status": "Chargeback assigned successfully."}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Comment
+from .serializers import CommentSerializer
+
+class CommentListView(APIView):
+    def get(self, request, chargeback_id):
+        comments = Comment.objects.filter(chargeback_id=chargeback_id, parent=None)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, chargeback_id):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(chargeback_id=chargeback_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CommentDetailView(APIView):
+    def get_object(self, comment_id):
+        try:
+            return Comment.objects.get(id=comment_id)
+        except Comment.DoesNotExist:
+            raise Http404
+
+    def get(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
+
+    def put(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentLikeView(APIView):
+    def post(self, request, comment_id, format=None):
+        comment = Comment.objects.get(id=comment_id)
+        comment.likes += 1
+        comment.save()
+        return Response({'status': 'comment liked'}, status=status.HTTP_200_OK)
+
+
+class CommentDislikeView(APIView):
+    def post(self, request, comment_id, format=None):
+        comment = Comment.objects.get(id=comment_id)
+        comment.dislikes += 1
+        comment.save()
+        return Response({'status': 'comment disliked'}, status=status.HTTP_200_OK)
+
+
+class CommentReplyView(APIView):
+    def post(self, request, comment_id, format=None):
+        parent_comment = Comment.objects.get(id=comment_id)
+        text = request.data.get('text')
+        reply_comment = Comment.objects.create(text=text, chargeback=parent_comment.chargeback, parent=parent_comment)
+        serializer = CommentSerializer(reply_comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 

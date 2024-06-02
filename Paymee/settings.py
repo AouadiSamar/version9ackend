@@ -1,39 +1,36 @@
 from datetime import timedelta
 from pathlib import Path
+import os
 import environ
 
 env = environ.Env(DEBUG=(bool, False))
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(BASE_DIR / ".env")
-DEBUG = env("DEBUG")
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-# SECURITY WARNING: don't run with debug turned on in production!
-
-
-
 APPEND_SLASH = False
-
-
-
 ALLOWED_HOSTS = []
 
-
-
-# settings.py
-
-
+# CORS configuration
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
+CORS_ALLOW_ALL_ORIGINS = True  # Not recommended for production
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,7 +42,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'chargebacks.apps.ChargebacksConfig',
     'rembourssement.apps.RembourssementConfig',
-
     'corsheaders',
     'users.apps.UsersConfig',
     'djoser',
@@ -60,7 +56,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-
 ]
 
 ROOT_URLCONF = 'Paymee.urls'
@@ -83,38 +78,40 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Paymee.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'Paymee123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
-
-
-
-# settings.py
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# settings.py
 SESSION_COOKIE_AGE = 1800  # 30 minutes, en secondes
 SESSION_SAVE_EVERY_REQUEST = True
 
+# settings.py
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False  # Assurez-vous que cela est adapté à votre environnement (True pour HTTPS)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-  
 }
 
+# Custom user model
+AUTH_USER_MODEL = 'users.User'
 
-AUTH_USER_MODEL='users.User'
-
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -130,41 +127,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
+# Static files
 STATIC_URL = 'static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# JWT configuration
 
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": (
-        "Bearer",
-        "JWT"),
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=60),
-    "SIGNING_KEY": env("SIGNING_KEY"),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-}
-
+# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -175,16 +152,15 @@ LOGGING = {
         },
     },
     'loggers': {
-        '': {  # This means all loggers
+        'django': {
             'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
         },
     },
 }
 
+# Djoser configuration
 DOMAIN = 'localhost:5173'
-
 DJOSER = {
     'LOGIN_FIELD': 'email',
     "USER_CREATE_PASSWORD_RETYPE": True,
@@ -201,63 +177,25 @@ DJOSER = {
         'user_create': 'users.serializers.CreateUserSerializer',
         'user': "users.serializers.CreateUserSerializer",
         'current_user': 'users.serializers.UserSerializer',
+        'user_delete': "djoser.serializers.UserDeleteSerializer",
+    },
+}
 
-        'user_delete': "djoser.serializers.UserDeleteSerializer", },}
-
-
-
-
-
-
+# Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'samaraouadi7@gmail.com'  
-EMAIL_HOST_PASSWORD = 'gfhg ymzi bjmw hyfi'  
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'samaraouadi7@gmail.com'
+EMAIL_HOST_PASSWORD = 'pzer odyv mqnr oqsp'
 DEFAULT_FROM_EMAIL = 'samaraouadi7@gmail.com'
 
-EMAIL_PORT = 587  
-
-import os
-import environ
-env = environ.Env()
-env.read_env()  
-
-SITE_NAME = "Paymee"
-
-
-
-
-
+# Media files
 MEDIA_URL = '/media/'
-
-
-CORS_ALLOW_ALL_ORIGINS =True  # Not recommended for production
-
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Site name
+SITE_NAME = "Paymee"
 
-
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Ensure environment variables are loaded
+env.read_env()

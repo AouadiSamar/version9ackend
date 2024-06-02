@@ -2,15 +2,20 @@ from django.urls import path
 from . import views
 from .views import ResetPasswordConfirm, SendResetEmailView, ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView
 
+from django.urls import path
+from .views import login_with_2fa, verify_2fa
 
 from .views import ToggleUserActiveStatus
 
 urlpatterns = [
 
 
-    path('recognize-faces/', views.recognize_faces_api, name='recognize_faces_api'),
 
 
+
+    path('login/2fa/', login_with_2fa, name='login_with_2fa'),
+    path('login/verify/', verify_2fa, name='verify_2fa'),
+    # Ajoutez d'autres chemins d'URL ici
 
     
     path('active-sessions/', views.active_sessions, name='active_sessions'),

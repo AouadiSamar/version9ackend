@@ -76,12 +76,15 @@ class Comment(models.Model):
     # Ajouter des champs pour stocker le prénom et le nom de famille de l'utilisateur
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
+    likes = models.PositiveIntegerField(default=0)
+    dislikes = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(null=True,auto_now_add=True)
+    updated_at = models.DateTimeField(null=True,auto_now=True)
 
+    def __str__(self):
+        return self.text
 
-
-
-
-    
 
 from django.db import models
 from django.conf import settings
@@ -101,6 +104,19 @@ class ActionLog(models.Model):
 
     def __str__(self):
         return f'{self.created_at.strftime("%Y-%m-%d %H:%M:%S")} - {self.action} by {self.user.email}'
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

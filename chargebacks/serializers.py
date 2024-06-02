@@ -72,6 +72,7 @@ class FileSerializer(serializers.ModelSerializer):
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+
     role_names = serializers.SerializerMethodField()
 
     class Meta:
@@ -109,25 +110,6 @@ from users.models import User
 
 
 
-
-from rest_framework import serializers
-
-class CommentSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
-    last_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
-
-    class Meta:
-        model = Comment
-        fields = ['id', 'text', 'chargeback', 'user','last_name' ,'first_name']  # Inclure le champ user_name
-
-
-
-from rest_framework import serializers
-
-
-# serializers.py
-from rest_framework import serializers
-from .models import Chargeback
 
 
 
@@ -184,6 +166,32 @@ class ChargebackSerializer(serializers.ModelSerializer):
 
 
 
+from rest_framework import serializers
+
+from rest_framework import serializers
+from .models import Comment
+
+class CommentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
+    last_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
+
+    replies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    class Meta:
+        model = Comment
+        
+        fields = '__all__'
+    
+    def get_replies(self, obj):
+        replies = obj.replies.all()
+        return CommentSerializer(replies, many=True).data
+
+from rest_framework import serializers
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Chargeback
+
 
 class ActionLogSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()  # Ensure this displays user email or username
@@ -195,3 +203,5 @@ class ActionLogSerializer(serializers.ModelSerializer):
 
 
 
+from rest_framework import serializers
+from .models import Comment
