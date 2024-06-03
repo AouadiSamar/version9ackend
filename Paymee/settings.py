@@ -1,6 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
 import os
+from django.conf import settings
 import environ
 
 env = environ.Env(DEBUG=(bool, False))
@@ -93,7 +94,7 @@ DATABASES = {
 # Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 1800  # 30 minutes, en secondes
+SESSION_COOKIE_AGE = 5000 
 SESSION_SAVE_EVERY_REQUEST = True
 
 # settings.py
@@ -107,7 +108,23 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+# settings.py
 
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Durée de vie du token d'accès
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Durée de vie du token de rafraîchissement
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': settings.SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
+}
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
 
