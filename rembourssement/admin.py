@@ -19,7 +19,7 @@ admin.site.register(ActionLog, ActionLogAdmin)
 from django.contrib import admin
 from .models import Rembourssement
 
-class ChargebackAdmin(admin.ModelAdmin):
+class RembourssementAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not obj.created_by:
             obj.created_by = request.user
@@ -29,4 +29,4 @@ class ChargebackAdmin(admin.ModelAdmin):
         obj.created_by = request.user  # Ensure the user is set before deletion
         obj.delete()
 
-admin.site.register(Rembourssement, ChargebackAdmin)
+admin.site.register(Rembourssement, RembourssementAdmin)

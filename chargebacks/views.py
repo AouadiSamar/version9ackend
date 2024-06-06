@@ -497,45 +497,143 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Comment
 from .serializers import CommentSerializer
-class CommentView(APIView):
-    def get(self, request, chargeback_id):
-        comments = Comment.objects.filter(chargeback_id=chargeback_id)
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request, chargeback_id):
-        serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
-        if serializer.is_valid():
-            user = request.user
-            serializer.validated_data['first_name'] = user.first_name
-            serializer.validated_data['last_name'] = user.last_name
-            serializer.validated_data['chargeback_id'] = chargeback_id
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, comment_id):
-        try:
-            comment = Comment.objects.get(id=comment_id)
-            serializer = CommentSerializer(comment, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Comment.DoesNotExist:
-            return Response({"message": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    def delete(self, request, comment_id):
-        try:
-            comment = Comment.objects.get(id=comment_id)
-            comment.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Comment.DoesNotExist:
-            return Response({"message": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
-        
 
         
    
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
+from .models import Comment, Chargeback
+from .serializers import CommentSerializer
+
+class CommentListView(APIView):
+    def get(self, request, chargeback_id):
+        comments = Comment.objects.filter(chargeback_id=chargeback_id, parent=None)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, chargeback_id):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.save(chargeback_id=chargeback_id, user=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+
+class ChargebacksByStatusView(APIView):
+    def get(self, request):
+        chargebacks_by_status = Chargeback.objects.values('status').annotate(count=Count('id'))
+        return Response(chargebacks_by_status, status=status.HTTP_200_OK)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+from .serializers import ChargebackSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+from .serializers import ChargebackSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+from .serializers import ChargebackSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+from .serializers import ChargebackSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+from .serializers import ChargebackChartDataSerializer
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chargeback
+from .serializers import ChargebackChartDataSerializer
+
+class ChargebackDataView(APIView):
+    def get(self, request):
+        chargebacks = Chargeback.objects.annotate(month=TruncMonth('creation_date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+        serializer = ChargebackChartDataSerializer(chargebacks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CommentDetailView(APIView):
+    def get_object(self, comment_id):
+        try:
+            return Comment.objects.get(id=comment_id)
+        except Comment.DoesNotExist:
+            raise Http404
+
+    def get(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
+
+    def put(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentLikeView(APIView):
+    def post(self, request, comment_id, format=None):
+        comment = Comment.objects.get(id=comment_id)
+        comment.likes += 1
+        comment.save()
+        return Response({'status': 'comment liked'}, status=status.HTTP_200_OK)
+
+
+class CommentDislikeView(APIView):
+    def post(self, request, comment_id, format=None):
+        comment = Comment.objects.get(id=comment_id)
+        comment.dislikes += 1
+        comment.save()
+        return Response({'status': 'comment disliked'}, status=status.HTTP_200_OK)
+
+
+class CommentReplyView(APIView):
+    def post(self, request, comment_id, format=None):
+        parent_comment = Comment.objects.get(id=comment_id)
+        text = request.data.get('text')
+        reply_comment = Comment.objects.create(
+            text=text, 
+            chargeback=parent_comment.chargeback, 
+            parent=parent_comment, 
+            user=request.user,
+            first_name=request.user.first_name,
+            last_name=request.user.last_name
+        )
+        serializer = CommentSerializer(reply_comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
     
@@ -587,31 +685,6 @@ class ChargebackCreateView(APIView):
 
 
 
-class FileUploadView(APIView):
-    def post(self, request, pk):
-        chargeback = get_object_or_404(Chargeback, pk=pk)
-        file_serializer = FileSerializer(data=request.data, context={'request': request})
-        
-        if file_serializer.is_valid():
-            file_serializer.save(chargeback=chargeback)
-            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class FileCreateView(generics.CreateAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-class FileListView(generics.ListAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-class FileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-
-# views.py
 # views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -634,19 +707,10 @@ class ToggleActiveStatus(APIView):
         return Response({"success": True, "is_active": chargeback.is_active}, status=status.HTTP_200_OK)
 
 
-def download_file(request, file_id):
-    file_obj = get_object_or_404(File, id=file_id)
-    response = FileResponse(file_obj.file.open(), as_attachment=True, filename=file_obj.file.name)
-    return response
 
 
 
 
-@api_view(['DELETE'])
-def delete_file(request, pk):
-    file = get_object_or_404(File, pk=pk)
-    file.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -698,67 +762,52 @@ from rest_framework.views import APIView
 from .models import Comment
 from .serializers import CommentSerializer
 
-class CommentListView(APIView):
-    def get(self, request, chargeback_id):
-        comments = Comment.objects.filter(chargeback_id=chargeback_id, parent=None)
-        serializer = CommentSerializer(comments, many=True)
+
+
+
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from .models import Chargeback, File
+from .serializers import FileSerializer
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+@method_decorator(csrf_exempt, name='dispatch')
+class FileUploadView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, pk, format=None):
+        chargeback = get_object_or_404(Chargeback, pk=pk)
+        file_serializer = FileSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save(chargeback=chargeback)
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# De même pour les autres vues utilisant DELETE et POST
+@csrf_exempt
+def delete_file(request, pk):
+    file = get_object_or_404(File, pk=pk)
+    file.delete()
+    return HttpResponse(status=204)
+
+@csrf_exempt
+def download_file(request, file_id):
+    file = get_object_or_404(File, id=file_id)
+    response = HttpResponse(file.file, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename={file.file.name}'
+    return response
+
+class FileDetailView(APIView):
+    def get(self, request, chargeback_id, file_id, format=None):
+        file = get_object_or_404(File, chargeback__id=chargeback_id, id=file_id)
+        serializer = FileSerializer(file)
         return Response(serializer.data)
 
-    def post(self, request, chargeback_id):
-        serializer = CommentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(chargeback_id=chargeback_id)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CommentDetailView(APIView):
-    def get_object(self, comment_id):
-        try:
-            return Comment.objects.get(id=comment_id)
-        except Comment.DoesNotExist:
-            raise Http404
-
-    def get(self, request, comment_id, format=None):
-        comment = self.get_object(comment_id)
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data)
-
-    def put(self, request, comment_id, format=None):
-        comment = self.get_object(comment_id)
-        serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, comment_id, format=None):
-        comment = self.get_object(comment_id)
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class CommentLikeView(APIView):
-    def post(self, request, comment_id, format=None):
-        comment = Comment.objects.get(id=comment_id)
-        comment.likes += 1
-        comment.save()
-        return Response({'status': 'comment liked'}, status=status.HTTP_200_OK)
-
-
-class CommentDislikeView(APIView):
-    def post(self, request, comment_id, format=None):
-        comment = Comment.objects.get(id=comment_id)
-        comment.dislikes += 1
-        comment.save()
-        return Response({'status': 'comment disliked'}, status=status.HTTP_200_OK)
-
-
-class CommentReplyView(APIView):
-    def post(self, request, comment_id, format=None):
-        parent_comment = Comment.objects.get(id=comment_id)
-        text = request.data.get('text')
-        reply_comment = Comment.objects.create(text=text, chargeback=parent_comment.chargeback, parent=parent_comment)
-        serializer = CommentSerializer(reply_comment)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 

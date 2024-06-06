@@ -68,22 +68,27 @@ from users.models import User
 from django.db import models
 from users.models import User
 
+from django.db import models
+from users.models import User  # Importer le modèle utilisateur personnalisé
+
+
 class Comment(models.Model):
     text = models.TextField()
     chargeback = models.ForeignKey(Chargeback, on_delete=models.CASCADE)
-    user = models.ForeignKey(User,null=True, on_delete=models.CASCADE)  # Utiliser le modèle User de Django
+    user = models.ForeignKey(User, null=True,on_delete=models.CASCADE, related_name='chargeback_comments')  # Utiliser le modèle utilisateur personnalisé
 
     # Ajouter des champs pour stocker le prénom et le nom de famille de l'utilisateur
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='re', on_delete=models.CASCADE)
     likes = models.PositiveIntegerField(default=0)
     dislikes = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(null=True,auto_now_add=True)
-    updated_at = models.DateTimeField(null=True,auto_now=True)
+    created_at = models.DateTimeField(null=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, auto_now=True)
 
     def __str__(self):
         return self.text
+
 
 
 from django.db import models
@@ -126,5 +131,11 @@ from django.conf import settings
 from django.db import models
 
 class File(models.Model):
-    chargeback = models.ForeignKey(Chargeback, related_name='files', null=True,on_delete=models.CASCADE)
-    file = models.FileField(upload_to='uploads/')  # Ensure your field is correctly defined
+    chargeback = models.ForeignKey(Chargeback, null= True,related_name='files', on_delete=models.CASCADE)
+    file = models.FileField(null= True,upload_to='files/')
+    uploaded_at = models.DateTimeField(null= True,auto_now_add=True)
+    created_at = models.DateTimeField(null= True,auto_now_add=True)
+
+
+
+    

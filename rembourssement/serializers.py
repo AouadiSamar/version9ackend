@@ -37,22 +37,30 @@ from rest_framework import serializers
 from .models import Comment, Rembourssement
 from rest_framework import serializers
 from .models import Comment
+from datetime import datetime
 
+class RembourssementChartDataSerializer(serializers.Serializer):
+    month = serializers.SerializerMethodField()
+    total_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
-
+    def get_month(self, obj):
+        # Convert datetime to date
+        return obj['month'].date() if isinstance(obj['month'], datetime) else obj['month']
 
 class CommentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    replies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = Comment
-        fields = ['id', 'text', 'rembourssement', 'user']  # Assuming 'user' is included if relevant
-
-    def create(self, validated_data):
-        # As rembourssement is now being passed directly to save(), it should not be fetched from context
-        user = self.context['request'].user  # Still fetch user from context
-        rembourssement = validated_data.pop('rembourssement', None)  # Safely extract rembourssement from validated_data
-        return Comment.objects.create(**validated_data, user=user, rembourssement=rembourssement)
-
-
+        
+        fields = '__all__'
+    
+    def get_replies(self, obj):
+        replies = obj.replies.all()
+        return CommentSerializer(replies, many=True).data
+from rest_framework import serializers
+from .models import Comment
 
 
 
@@ -93,17 +101,9 @@ from .models import File
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['id', 'file', 'rembourssement']
-        read_only_fields = ['rembourssement']  # Ensure rembourssement is not written directly
+        fields ='__all__'
 
-    def save(self, **kwargs):
-        # Ensure rembourssement is added from the view, not expecting from the request
-        rembourssement = kwargs.get('rembourssement')
-        if rembourssement:
-            self.validated_data['rembourssement'] = rembourssement
-        super(FileSerializer, self).save(**kwargs)
-
-
+  
 
 
 
@@ -111,18 +111,13 @@ class FileSerializer(serializers.ModelSerializer):
 
 class RembourssementSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True)  # Assuming you have a FileSerializer
-
-    
     assigned_to = UserSerializer(read_only=True)
 
     class Meta:
         model = Rembourssement
-        fields = [
-            'id', 'title', 'description', 'authorization_number', 'amount', 
-            'merchant_number', 'merchant_email', 'merchant_name', 'status', 
-            'reason', 'creation_date', 'modification_date', 'created_by',
-            'assigned_to', 'files'
-        ]
+        
+        fields ='__all__'
+
 
 
     def save(self, **kwargs):

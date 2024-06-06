@@ -1,45 +1,47 @@
 from django.urls import path
-from .views import RembourssementCreateView,AssignRembourssementView, CommentView,RembourssementListView,RembourssementDetailView,RembourssementUpdateView,RembourssementCreateView,RembourssementDeleteView
-from .views import  RembourssementStatusUpdateView,RembourssementLogsView
-from .views import RembourssementLogsView 
-from .views import CancelRembourssementView, ReactivateRembourssementView
+from .views import (
+    RembourssementUpdateView,  RembourssementDeleteView, RembourssementListView, 
+    RembourssementDetailView,  RembourssementStatusUpdateView, RembourssementLogsView, 
+    RembourssementCreateView, ToggleActiveStatus, AssignRembourssementView, FileUploadView, 
+    delete_file, download_file, FileDetailView, RembourssementDataView
+)
 
 
-# urls.py
-from django.urls import path
-from .views import FileUploadView, FileDetailView
-
-
-from django.urls import path
-
+from .views import (
+    CommentListView,
+    CommentDetailView,
+    CommentLikeView,
+    CommentDislikeView,
+    CommentReplyView)
 urlpatterns = [
-    path('rembourssement/',RembourssementCreateView.as_view(), name='rembourssement-create'),
-    path('rembourssement/<int:rembourssement_id>/comments', CommentView.as_view(), name='rembourssement-comments'),
-    path('rembourssement/<int:pk>/assign/', AssignRembourssementView.as_view(), name='assign-rembourssement'),
-    path('rembourssement/<int:pk>/update-status/', RembourssementStatusUpdateView.as_view(), name='update-rembourssement-status'),
+    path('rembourssements/', RembourssementListView.as_view(), name='rembourssement-list'),
+    path('rembourssements/create/', RembourssementCreateView.as_view(), name='rembourssement-create'),
+    path('rembourssements/<int:pk>/', RembourssementDetailView.as_view(), name='rembourssement-detail'),
+    path('rembourssements/<int:pk>/update/', RembourssementUpdateView.as_view(), name='rembourssement-update'),
+    path('rembourssements/<int:pk>/delete/', RembourssementDeleteView.as_view(), name='rembourssement-delete'),
+    path('rembourssements/<int:pk>/status/', RembourssementStatusUpdateView.as_view(), name='rembourssement-status-update'),
+    path('rembourssements/<int:pk>/logs/', RembourssementLogsView.as_view(), name='rembourssement-logs'),
+    path('rembourssements/<int:pk>/assign/', AssignRembourssementView.as_view(), name='assign-rembourssement'),
+    path('rembourssements/<int:pk>/files/upload/', FileUploadView.as_view(), name='file-upload'),
+    path('rembourssements/files/<int:pk>/delete/', delete_file, name='file-delete'),
+    path('files/<int:file_id>/download/', download_file, name='file-download'),
+    path('rembourssements/<int:rembourssement_id>/files/<int:file_id>/', FileDetailView.as_view(), name='file-detail'),
+    path('rembourssements/<int:rembourssement_id>/toggle-active/', ToggleActiveStatus.as_view(), name='toggle-active-status'),
 
-    path('rembourssement/list/',RembourssementListView.as_view(), name='rembourssement-list'),
-    path('rembourssement/<int:pk>/edit/',RembourssementUpdateView.as_view(), name='rembourssement-update'),
-    path('rembourssement/delete/<int:pk>/',RembourssementDeleteView.as_view(), name='rembourssement-delete'),
-
-
-    path('rembourssement/<int:pk>/',RembourssementDetailView.as_view(), name='rembourssement-detail'),
-
-
-    path('rembourssement/<int:rembourssement_id>/files/<int:file_id>/', FileDetailView.as_view(), name='file-detail'),
-
-
-    path('rembourssement/<int:pk>/cancel/', CancelRembourssementView.as_view(), name='cancel-rembourssement'),
-    path('rembourssement/<int:pk>/reactivate/', ReactivateRembourssementView.as_view(), name='reactivate-rembourssement'),
+    path('rembourssements/data/', RembourssementDataView.as_view(), name='rembourssement-data'),
 
 
 
 
-        path('rembourssement/<int:pk>/upload-file/', FileUploadView.as_view(), name='rembourssement-file-upload'),
+    path('rembourssements/<int:rembourssement_id>/comments/', CommentListView.as_view(), name='rembourssement-comments'),
+    path('rembourssements/comments/<int:comment_id>/', CommentDetailView.as_view(), name='rembourssement-comment-detail'),
+    path('rembourssements/comments/<int:comment_id>/like/', CommentLikeView.as_view(), name='rembourssement-comment-like'),
+    path('rembourssements/comments/<int:comment_id>/dislike/', CommentDislikeView.as_view(), name='rembourssement-comment-dislike'),
+    path('rembourssements/comments/<int:comment_id>/reply/', CommentReplyView.as_view(), name='rembourssement-comment-reply'),
 
-    path('rembourssement/<int:pk>/logs/',RembourssementLogsView.as_view(), name='rembourssement-logs'),
-
-
-]
-
-
+    
+    
+    
+    
+    
+    ]

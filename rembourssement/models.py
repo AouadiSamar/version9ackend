@@ -8,8 +8,9 @@ from django.conf import settings
 
 
 class Rembourssement(models.Model):
-    is_active = models.BooleanField(default=True, help_text="Indicates whether the rembourssement is active or not.")
+    is_active = models.BooleanField(default=True)
 
+    status = models.CharField(max_length=100)
 
     title = models.CharField(max_length=100)
     description = models.TextField()
@@ -65,14 +66,38 @@ from django.db import models
 from django.db import models
 from django.conf import settings
 
+from django.db import models
+from users.models import User
+
+
+from django.db import models
+from users.models import User  # Importer le modèle utilisateur personnalisé
+
+from django.db import models
+from users.models import User  # Utiliser le modèle utilisateur personnalisé
+
+from django.db import models
+from users.models import User  # Utiliser le modèle utilisateur personnalisé
+
+
+
 class Comment(models.Model):
     text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    rembourssement= models.ForeignKey(Rembourssement, related_name='commentss', on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, on_delete=models.CASCADE, related_name='commentss')
+    rembourssement = models.ForeignKey(Rembourssement, on_delete=models.CASCADE)
+    user = models.ForeignKey(User,null=True,on_delete=models.CASCADE, related_name='rembourssement_comments')  # Utiliser le modèle utilisateur personnalisé
+
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='re', on_delete=models.CASCADE)
+    likes = models.PositiveIntegerField(default=0)
+    dislikes = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(null=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, auto_now=True)
 
     def __str__(self):
-        return self.text[:50]
+        return self.text
+
+
 
 
 
@@ -99,9 +124,8 @@ class ActionLog(models.Model):
 
 
 
-from django.db import models
-
 class File(models.Model):
+    rembourssement = models.ForeignKey(Rembourssement, related_name='files', on_delete=models.CASCADE, null=True, blank=True)
     file = models.FileField(upload_to='uploads/')
-    rembourssement = models.ForeignKey(Rembourssement, related_name='files', on_delete=models.CASCADE)
-    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(null=True,auto_now_add=True)
+    updated_at = models.DateTimeField(null=True,auto_now=True)

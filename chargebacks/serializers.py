@@ -61,11 +61,6 @@ from .models import File
 
 
 
-class FileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = File
-        fields = ['id', 'file']
-        read_only_fields = ['chargeback']  # Ensure chargeback is not written directly
 
    
 
@@ -111,7 +106,38 @@ from users.models import User
 
 
 
+from rest_framework import serializers
+from .models import File
 
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = '__all__'
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Chargeback
+# serializers.py
+from rest_framework import serializers
+
+# serializers.py
+from rest_framework import serializers
+from .models import Chargeback
+
+# serializers.py
+from rest_framework import serializers
+from .models import Chargeback
+from rest_framework import serializers
+from datetime import datetime
+
+class ChargebackChartDataSerializer(serializers.Serializer):
+    month = serializers.SerializerMethodField()
+    total_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+    def get_month(self, obj):
+        # Convert datetime to date
+        return obj['month'].date() if isinstance(obj['month'], datetime) else obj['month']
 
 
 class ChargebackSerializer(serializers.ModelSerializer):
@@ -202,6 +228,12 @@ class ActionLogSerializer(serializers.ModelSerializer):
 
 
 
+from rest_framework.generics import RetrieveAPIView
+from .models import File
+from .serializers import FileSerializer
 
-from rest_framework import serializers
-from .models import Comment
+
+
+from .models import File
+from .serializers import FileSerializer
+
