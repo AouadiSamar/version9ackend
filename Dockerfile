@@ -1,23 +1,24 @@
-# Use the official Python image from the Docker Hub
+# Utiliser l'image officielle de Python
 FROM python:3.9-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Définir le répertoire de travail
+WORKDIR /app
 
-# Set work directory
-WORKDIR /code
+# Copier les fichiers de l'application
+COPY . /app
 
-# Install dependencies
-COPY requirements.txt /code/
-RUN pip install --upgrade pip
+# Installer les dépendances
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 
-# Copy project
-COPY . /code/
+# Appliquer les migrations de base de données
+RUN python manage.py migrate
 
-# Copy entrypoint script
-COPY entrypoint.sh /code/entrypoint.sh
+# Collecter les fichiers statiques
+RUN python manage.py collectstatic --noinput
 
-# Run the entrypoint script
-ENTRYPOINT ["/code/entrypoint.sh"]
+# Exposer le port de l'application
+EXPOSE 8000
+
+# Lancer l'application
+CMD ["gunicorn", "myproject.wsgi:application", "--bind", "0.0.0.0:8000"]
