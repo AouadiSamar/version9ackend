@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Utiliser Python et Pip directement
-python -m pip install --upgrade pip
-python -m pip install setuptools==65.5.0 wheel
+# Installer les dépendances Python
+python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r requirements.txt
 
 # Appliquer les migrations de base de données
