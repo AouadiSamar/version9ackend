@@ -1,12 +1,6 @@
 #!/bin/bash
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Run migrations
-python manage.py migrate
-
-# Collect static files
-python manage.py collectstatic --noinput
-
-# Any other build steps
+# Use python3 instead of python
+python3 -m pip install -r requirements.txt
+python3 manage.py migrate
+python3 manage.py collectstatic --noinput
