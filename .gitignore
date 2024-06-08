@@ -1,0 +1,29 @@
+# Python
+*.pyc
+*.pyo
+__pycache__/
+*.so
+
+# Virtualenv
+.env
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media
+
+# Env files
+*.env
+
+# macOS
+.DS_Store
+
+# Vercel
+.vercel
