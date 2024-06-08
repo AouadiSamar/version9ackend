@@ -2,6 +2,11 @@ django
 djangorestframework
 djangorestframework-simplejwt
 django-environ
-psycopg2
+psycopg2-binary
 djoser
 django-cors-headers
+joblib
+pandas
+matplotlib
+gunicorn
+whitenoise
