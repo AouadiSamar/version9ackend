@@ -14,14 +14,17 @@ environ.Env.read_env(BASE_DIR / ".env")
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 APPEND_SLASH = False
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.vercel.app', 'localhost']
 
-# CORS configuration
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
-CORS_ALLOW_ALL_ORIGINS = True  # Not recommended for production
+CORS_ALLOW_ALL_ORIGINS = False  # Not recommended for production
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -47,11 +50,14 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'djoser',
 ]
-
+CSRF_COOKIE_NAME = "csrftoken"
+CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
