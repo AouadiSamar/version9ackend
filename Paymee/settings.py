@@ -15,7 +15,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost'])
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
