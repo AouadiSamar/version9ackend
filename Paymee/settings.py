@@ -15,7 +15,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -27,9 +27,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'chargebacks',
-    'rembourssement',
-    'users',
+    'chargebacks.apps.ChargebacksConfig',
+    'rembourssement.apps.RembourssementConfig',
+    'users.apps.UsersConfig',  # Updated to reference the configuration class
     'djoser',
 ]
 
@@ -65,10 +65,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Paymee.wsgi.application'
 
-# Database configuration
 DATABASES = {
     'default': dj_database_url.config(
-        default=env('DATABASE_URL')
+        default=os.environ.get('DATABASE_URL')
     )
 }
 
