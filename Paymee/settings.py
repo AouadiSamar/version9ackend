@@ -1,10 +1,10 @@
 from datetime import timedelta
+from pathlib import Path
 import os
 from django.conf import settings
 import environ
-
+import dj_database_url  # Assurez-vous d'importer correctement dj-database-url
 from pathlib import Path
-
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -15,19 +15,20 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Configuration de base
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost'])
 
-# Ajoutez le domaine Heroku si la variable d'environnement est définie
-HEROKU_URL = env('HEROKU_URL', default=None)
-if HEROKU_URL:
-    ALLOWED_HOSTS.append(HEROKU_URL)
 
 # Autres configurations...
 
-# Database
+import dj_database_url
+import os
+
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres:///postgres')
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL')
+    )
 }
+
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -144,4 +145,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Nom du site
 SITE_NAME = "Paymee"
-
