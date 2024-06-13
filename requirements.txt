@@ -19,7 +19,7 @@ djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
 djoser==2.2.3
 fonttools==4.53.0
-gunicorn==22.0.0P
+gunicorn==22.0.0
 h11==0.14.0
 idna==3.7
 joblib==1.4.2
