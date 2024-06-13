@@ -72,8 +72,6 @@ DATABASES = {
 }
 
 # Email configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_USE_TLS = True
 # Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -185,15 +183,16 @@ DJOSER = {
 # Site name
 SITE_NAME = "Paymee"
 
-CSRF_TRUSTED_ORIGINS = ['https://https://samar-cdd4a.web.app']  
+CSRF_TRUSTED_ORIGINS = [
+    'https://samar-cdd4a.web.app',
+    'http://localhost:5173',  # Ajoutez ceci si vous testez également en local
+]
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',
     'http://localhost:5173',  # Ajoutez ceci si vous testez également en local
-
 ]
-CSRF_TRUSTED_ORIGINS.append('http://localhost:5173')
-
 CORS_ALLOW_CREDENTIALS = True
+
 
 CORS_ALLOW_HEADERS = [
     'Access-Control-Allow-Origin',
@@ -203,7 +202,6 @@ CORS_ALLOW_HEADERS = [
     'Content-Type',
     'Authorization',
 ]
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
