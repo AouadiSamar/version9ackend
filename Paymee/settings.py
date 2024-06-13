@@ -192,6 +192,7 @@ SITE_NAME = "Paymee"
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',  # URL de votre application déployée sur Firebase
+    'https://version7-2backend.onrender.com/',  # URL de votre backend déployé sur Render
 ]
 
 CORS_ALLOW_CREDENTIALS = True
