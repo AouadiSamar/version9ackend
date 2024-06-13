@@ -126,7 +126,6 @@ def login_with_2fa(request):
         request.session['secret_code'] = str(secret_code)
         request.session['user_id'] = user.id
         request.session.modified = True  # Assurez-vous que la session est sauvegardée
-
         print(f"Code de vérification généré : {secret_code}")  # Debugging
         print(f"Session data after save: {request.session.items()}")  # Debugging
 
@@ -135,19 +134,17 @@ def login_with_2fa(request):
 
         return response
     return JsonResponse({'error': 'Invalid credentials'}, status=400)
-
 @api_view(['POST'])
 def verify_2fa(request):
     secret_code = request.data.get('secret_code')
     stored_code = request.session.get('secret_code')
-    user_id = request.session.get('user_id')
-    
     print(f"Code de vérification soumis : {secret_code}")  # Debugging
     print(f"Code de vérification stocké : {stored_code}")  # Debugging
     print(f"Session data at verify: {request.session.items()}")  # Debugging
     print(f"Cookies: {request.COOKIES}")  # Debugging
 
     if secret_code == stored_code:
+        user_id = request.session.get('user_id')
         user = User.objects.get(id=user_id)
 
         # Générer et retourner les tokens JWT
@@ -158,7 +155,6 @@ def verify_2fa(request):
             'access': str(refresh.access_token),
         }, status=status.HTTP_200_OK)
     return Response({'error': 'Invalid verification code'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 
