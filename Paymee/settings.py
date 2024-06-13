@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',  # Updated to reference the configuration class
     'djoser',
 ]
-
+CSRF_COOKIE_SECURE = False 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
