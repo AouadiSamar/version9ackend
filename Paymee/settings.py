@@ -82,7 +82,6 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # Session configuration
 SESSION_COOKIE_SECURE = False  # Utilisez True en production si vous utilisez HTTPS
-SESSION_COOKIE_AGE = 5000
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
