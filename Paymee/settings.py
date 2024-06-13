@@ -185,10 +185,13 @@ DJOSER = {
 # Site name
 SITE_NAME = "Paymee"
 
-# Configuration CORS
+CSRF_TRUSTED_ORIGINS = ['https://https://samar-cdd4a.web.app']  
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',
+    'http://localhost:5173',  # Ajoutez ceci si vous testez également en local
+
 ]
+CSRF_TRUSTED_ORIGINS.append('http://localhost:5173')
 
 CORS_ALLOW_CREDENTIALS = True
 
