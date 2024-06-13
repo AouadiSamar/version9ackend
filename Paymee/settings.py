@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',  # Updated to reference the configuration class
     'djoser',
 ]
-CSRF_COOKIE_SECURE = False 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -45,6 +45,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Session and Cookie configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 5000
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_SECURE = False  # Use True in production with HTTPS
+SESSION_COOKIE_SAMESITE = None
+CSRF_COOKIE_SECURE = False  # Use True in production with HTTPS
+CSRF_COOKIE_SAMESITE = None
 
 ROOT_URLCONF = 'Paymee.urls'
 
@@ -73,14 +82,10 @@ DATABASES = {
 }
 
 # Email configuration
-# Session configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 5000
-SESSION_SAVE_EVERY_REQUEST = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
 
-# Session configuration
-SESSION_COOKIE_SECURE = False  # Utilisez True en production si vous utilisez HTTPS
+# REST framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -159,7 +164,6 @@ LOGGING = {
 }
 
 # Djoser configuration
-# Djoser configuration
 DOMAIN = 'https://samar-cdd4a.web.app'
 DJOSER = {
     'LOGIN_FIELD': 'email',
@@ -181,19 +185,18 @@ DJOSER = {
     },
 }
 
-# Site name
-SITE_NAME = "Paymee"
-
+# CORS and CSRF settings
 CSRF_TRUSTED_ORIGINS = [
     'https://samar-cdd4a.web.app',
-    'http://localhost:5173',  # Ajoutez ceci si vous testez également en local
+    'http://localhost:5173',
 ]
+
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',
-    'http://localhost:5173',  # Ajoutez ceci si vous testez également en local
+    'http://localhost:5173',
 ]
-CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
     'Access-Control-Allow-Origin',
@@ -203,8 +206,7 @@ CORS_ALLOW_HEADERS = [
     'Content-Type',
     'Authorization',
 ]
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'samaraouadi7@gmail.com'
