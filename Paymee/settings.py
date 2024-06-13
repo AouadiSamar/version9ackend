@@ -188,6 +188,8 @@ DJOSER = {
 
 # Site name
 SITE_NAME = "Paymee"
+
+# CORS configuration
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',  # URL de votre application déployée sur Firebase
 ]
