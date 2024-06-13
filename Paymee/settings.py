@@ -188,7 +188,6 @@ SITE_NAME = "Paymee"
 # Configuration CORS
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',
-     'http://localhost:3000',        # URL 
 ]
 
 CORS_ALLOW_CREDENTIALS = True
