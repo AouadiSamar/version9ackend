@@ -15,7 +15,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*", "localhost"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -86,7 +86,9 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 5000
 SESSION_SAVE_EVERY_REQUEST = True
 
-# REST Framework and JWT configuration
+# Session configuration
+SESSION_COOKIE_SECURE = False  # Utilisez True en production si vous utilisez HTTPS
+SESSION_COOKIE_AGE = 5000
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -188,6 +190,7 @@ DJOSER = {
 
 # Site name
 SITE_NAME = "Paymee"
+
 # Configuration CORS
 CORS_ALLOWED_ORIGINS = [
     'https://samar-cdd4a.web.app',  # URL de votre application déployée sur Firebase
