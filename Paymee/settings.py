@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
+    'corsheaders',  # Ajouté ici
     'chargebacks.apps.ChargebacksConfig',
     'rembourssement.apps.RembourssementConfig',
     'users.apps.UsersConfig',  # Updated to reference the configuration class
@@ -37,12 +37,12 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Ajouté ici
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'Paymee.urls'
@@ -188,3 +188,17 @@ DJOSER = {
 
 # Site name
 SITE_NAME = "Paymee"
+CORS_ALLOWED_ORIGINS = [
+    'https://samar-cdd4a.web.app',  # URL de votre application déployée sur Firebase
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods',
+    'Access-Control-Allow-Credentials',
+    'Content-Type',
+    'Authorization',
+]
