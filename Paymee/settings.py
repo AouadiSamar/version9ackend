@@ -160,7 +160,8 @@ LOGGING = {
 }
 
 # Djoser configuration
-DOMAIN = 'localhost:5173'
+# Djoser configuration
+DOMAIN = 'https://samar-cdd4a.web.app'
 DJOSER = {
     'LOGIN_FIELD': 'email',
     "USER_CREATE_PASSWORD_RETYPE": True,
