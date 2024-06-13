@@ -45,6 +45,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
 ROOT_URLCONF = 'Paymee.urls'
 
 TEMPLATES = [
