@@ -1,9 +1,26 @@
-from rest_framework import status, views
+from rest_framework import status, views, generics, serializers, permissions
 from rest_framework.response import Response
-from .serializers import UserSerializer
-from .models import User
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.decorators import api_view
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model, authenticate, login
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth.tokens import default_token_generator, PasswordResetTokenGenerator
+from django.core.mail import send_mail
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse, Http404, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.sessions.models import Session
+from django.conf import settings
+import random
+from rest_framework.generics import ListAPIView
 
+from .serializers import UserSerializer, RoleSerializer, PermissionSerializer, ResetPasswordConfirmSerializer
+from .models import User, Role, Permission
 class UserView(views.APIView):
 
     def get(self, request):
@@ -17,14 +34,6 @@ class UserView(views.APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-from django.contrib.messages import success
-
-from django.contrib.auth import authenticate, login
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework import status
 
 # # class VoiceLoginView(APIView):
 # #     permission_classes = [AllowAny]
@@ -40,12 +49,6 @@ from rest_framework import status
 
 # Import your custom forms (assuming they are in the same directory)
 
-from django.contrib.sessions.models import Session
-from django.utils import timezone
-from django.shortcuts import render
-
-from django.http import JsonResponse
-from django.utils import timezone
 
 def active_sessions(request):
     sessions = Session.objects.filter(expire_date__gte=timezone.now())
@@ -61,10 +64,6 @@ def active_sessions(request):
     return JsonResponse({'active_sessions': active_sessions})
 
 
-from django.shortcuts import redirect
-
-from django.http import JsonResponse
-from django.contrib.sessions.models import Session
 
 def terminate_session(request, session_key):
     response = {'status': 'failed', 'message': 'Session not found.'}
@@ -84,36 +83,7 @@ def terminate_session(request, session_key):
     return JsonResponse(response)
 
 
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from django.http import JsonResponse
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer  # Import the serializer
-
-# ... rest of your view code
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from .serializers import UserSerializer  # Import the serializer you created for the User model
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from .serializers import UserSerializer  # Adjust import as needed
-
-from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Role  # Ajustez l'import selon votre modèle de rôle
 
 class ProfileView(serializers.ModelSerializer):
     role_names = serializers.SerializerMethodField()
@@ -129,48 +99,6 @@ class ProfileView(serializers.ModelSerializer):
 
 
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.contrib.auth.models import User
-from rest_framework import status
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import User
-
-from django.contrib.auth.models import User
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.models import User
-from rest_framework import status
-
-
-
-
-
-
-
-
-
-
-
-import random
-from django.contrib.auth import authenticate
-from django.http import JsonResponse
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib.auth.models import update_last_login
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .models import User  # Assurez-vous d'importer votre modèle User
 
 def send_verification_email(to_email, code):
     subject = 'Votre code de vérification'
@@ -241,20 +169,6 @@ def verify_2fa(request):
 
 
 
-from django.shortcuts import render
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-
-from .models import User  # Importation correcte du modèle utilisateur personnalisé
-from users.serializers import RoleSerializer, UserSerializer
-
-from rest_framework.permissions import IsAuthenticated
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import User
-from .serializers import UserSerializer
 
 class UserListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -264,23 +178,7 @@ class UserListView(APIView):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from .models import User  # Assurez-vous d'importer votre modèle User
-from .serializers import UserSerializer  # Assurez-vous d'importer le bon serializer
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 
-from django.http import Http404
-
-from django.contrib.auth.models import User
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer
 
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -294,11 +192,6 @@ class UserDetailView(APIView):
 
 
 
-
-from rest_framework.generics import UpdateAPIView, RetrieveAPIView
-from rest_framework.response import Response
-from .serializers import UserSerializer
-from .models import User
 
 class UserUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
@@ -323,25 +216,9 @@ class UserUpdateView(generics.UpdateAPIView):
         return Response(serializer.data)
 
 
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-from django.urls import reverse_lazy
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from .serializers import UserSerializer
-
 User = get_user_model()
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .serializers import UserSerializer  # Assurez-vous que le chemin d'importation est correct
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils.crypto import get_random_string
+
 class UserCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -376,63 +253,7 @@ class UserUpdateView(generics.UpdateAPIView):
 
 
 
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
 
-from rest_framework import generics
-from .models import User
-from .serializers import UserSerializer
-# Django view for updating a user
-from rest_framework import generics
-from .serializers import UserSerializer
-
-from rest_framework.generics import UpdateAPIView
-from rest_framework.generics import UpdateAPIView
-from rest_framework.response import Response
-from .serializers import UserSerializer  # Adjust the import path as needed
-from .models import User  # Adjust the import path as needed
-
-from rest_framework.generics import UpdateAPIView
-from rest_framework.response import Response
-from .serializers import UserSerializer  # Adjust the import path as needed
-from .models import User  # Adjust the import path as needed
-from rest_framework.generics import UpdateAPIView
-from rest_framework.response import Response
-from .serializers import UserSerializer
-from .models import User
-
-
-
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-
-from rest_framework import status, generics
-from rest_framework.response import Response
-from .models import User
-
-from rest_framework.generics import DestroyAPIView
-from rest_framework.permissions import IsAuthenticated  # Optionnel, pour la sécurité
-from .models import User
-from .serializers import UserSerializer  # Ajustez selon votre cas
-
-
-from rest_framework.generics import DestroyAPIView
-from .models import User
-from .serializers import UserSerializer
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from .models import User
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from .models import User
-from .serializers import UserSerializer
 
 class UserDeleteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -445,31 +266,7 @@ class UserDeleteView(APIView):
 
 
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from .models import User
 
-
-
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from rest_framework.permissions import IsAdminUser
-
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
-
-from rest_framework.permissions import BasePermission, SAFE_METHODS
-
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
-from rest_framework import permissions
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
-from rest_framework.permissions import IsAuthenticated
 
 class ToggleUserActiveStatus(APIView):
     def patch(self, request, user_id):  # Make sure 'user_id' matches URL conf
@@ -479,20 +276,6 @@ class ToggleUserActiveStatus(APIView):
         return Response({"success": True, "is_active": user.is_active}, status=status.HTTP_200_OK)
 
 
-
-from rest_framework import generics, permissions
-from .models import Role
-from .serializers import RoleSerializer
-
-
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
-
-
-from rest_framework import generics
-from .models import Role
-from .serializers import RoleSerializer
-# from rest_framework import permissions
 
 class RoleListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -506,12 +289,6 @@ class RoleListView(generics.ListAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-from rest_framework.generics import ListAPIView
-
-
-from .models import Role
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
 
 class RoleUpdateView(generics.UpdateAPIView):
     queryset = Role.objects.all()
@@ -529,39 +306,6 @@ class RoleUpdateView(generics.UpdateAPIView):
 
         return Response(serializer.data)
 
-from .models import Role
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from .models import Role, Permission
-from .serializers import RoleSerializer
-
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from .models import Role, Permission  # Assuming models are defined elsewhere
-from .serializers import RoleSerializer
-
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from .models import Role, Permission
-from .serializers import RoleSerializer
-from django.shortcuts import render
-from .models import Permission  # Import your Permission model
-
-from rest_framework.generics import ListAPIView
-from .models import Permission
-from .serializers import PermissionSerializer
-
 class PermissionListView(ListAPIView):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
@@ -576,8 +320,6 @@ class RoleCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-from .models import Role
-from rest_framework import generics, permissions, serializers
 
 class RoleDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
@@ -595,27 +337,6 @@ class RoleDetailView(generics.RetrieveAPIView):
 
 
 
-from django.contrib.auth import get_user_model
-from rest_framework import generics, permissions
-from rest_framework.response import Response
-
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import NotAuthenticated
-
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
-
-from rest_framework.exceptions import PermissionDenied
-
-
-
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
 
 # Generate Token Manually
 def get_tokens_for_user(user):
@@ -633,55 +354,6 @@ def get_tokens_for_user(user):
 
 
 
-
-from django.core.mail import send_mail
-from django.http import HttpResponse
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.views import View
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.core.mail import send_mail
-from django.conf import settings
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from users.models import User  # Make sure this points to your User model
-
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode
-from rest_framework import views, status
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from rest_framework.permissions import AllowAny
-from .serializers import ResetPasswordConfirmSerializer
-
-
-from django.contrib.auth import get_user_model
-from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
 
 User = get_user_model()
 
@@ -749,13 +421,6 @@ class SendResetEmailView(APIView):
 
 
 
-
-
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from rest_framework.permissions import IsAdminUser
 
 User = get_user_model()
 

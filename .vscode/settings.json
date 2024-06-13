@@ -1,3 +1,8 @@
 {
-    "DockerRun.DisableDockerrc": true
+    "DockerRun.DisableDockerrc": true,
+    "python.pythonPath": "C:\\Users\\samar\\Version5\\Baackend\\myenv\\Scripts\\python.exe",
+    "python.analysis.extraPaths": [
+        "C:\\Users\\samar\\Version5\\Baackend\\myenv\\Lib\\site-packages"
+    ],
+    "python.analysis.logLevel": "info"
 }
