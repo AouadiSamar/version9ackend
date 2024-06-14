@@ -50,10 +50,10 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 5000
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_SECURE = False  # Use True in production with HTTPS
-SESSION_COOKIE_SAMESITE = 'Lax'  # Utilisez 'None' pour permettre les cookies intersites
-CSRF_COOKIE_SECURE = False  # Use True in production with HTTPS
-CSRF_COOKIE_SAMESITE = 'Lax'  # Utilisez 'None' pour permettre les cookies intersites
+SESSION_COOKIE_SECURE = True  # Use True in production with HTTPS
+SESSION_COOKIE_SAMESITE = None
+CSRF_COOKIE_SECURE = True  # Use True in production with HTTPS
+CSRF_COOKIE_SAMESITE = None
 
 ROOT_URLCONF = 'Paymee.urls'
 

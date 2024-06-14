@@ -107,6 +107,12 @@ def send_verification_email(to_email, code):
     recipient_list = [to_email]
     send_mail(subject, message, email_from, recipient_list)
 
+import random
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from django.contrib.auth import authenticate
+from users.models import User  # Assurez-vous d'importer votre modèle User
+
 @api_view(['POST'])
 def login_with_2fa(request):
     email = request.data.get('email')
@@ -130,10 +136,20 @@ def login_with_2fa(request):
         print(f"Session data after save: {request.session.items()}")  # Debugging
 
         response = JsonResponse({'message': 'Code de vérification envoyé'}, status=200)
-        response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='Lax')  # Set session cookie explicitly
-
+        response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='None')  # Utilisez SameSite=None pour les cookies intersites
         return response
+
     return JsonResponse({'error': 'Invalid credentials'}, status=400)
+# Set session cookie explicitly
+
+     
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.models import update_last_login
+from django.http import JsonResponse
+from users.models import User  # Assurez-vous d'importer votre modèle User
+
 @api_view(['POST'])
 def verify_2fa(request):
     secret_code = request.data.get('secret_code')
@@ -154,10 +170,8 @@ def verify_2fa(request):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }, status=status.HTTP_200_OK)
+
     return Response({'error': 'Invalid verification code'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 
 
