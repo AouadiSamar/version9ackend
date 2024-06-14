@@ -407,7 +407,7 @@ class SendResetEmailView(APIView):
             token_generator = PasswordResetTokenGenerator()
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_link = f"http://localhost:5173/reset-password-form/{uid}/{token}"
+            reset_link = f"https://samar-cdd4a.web.app/reset-password-form/{uid}/{token}"
 
             subject = "Reset Your Password :Paymee"
             message = f"You're receiving this email because you requested a password reset for your user account at Paymee.Please go to the following page and choose a new password:{reset_link}"
