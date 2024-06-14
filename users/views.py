@@ -109,32 +109,42 @@ def send_verification_email(to_email, code):
 
 @api_view(['POST'])
 def login_with_2fa(request):
-    email = request.data.get('email')
-    password = request.data.get('password')
-    user = authenticate(request, email=email, password=password)
-    if user is not None:
-        # Générer un code secret à 6 chiffres
-        secret_code = random.randint(100000, 999999)
+    try:
+        email = request.data.get('email')
+        password = request.data.get('password')
+        print(f"Email: {email}, Password: {password}")  # Debugging
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            # Générer un code secret à 6 chiffres
+            secret_code = random.randint(100000, 999999)
 
-        # Envoyer le code secret par email
-        try:
-            send_verification_email(user.email, secret_code)
-        except Exception as e:
-            return JsonResponse({'error': f"Erreur lors de l'envoi de l'email: {str(e)}"}, status=500)
+            # Envoyer le code secret par email
+            try:
+                send_verification_email(user.email, secret_code)
+                print(f"Email sent to {user.email} with code {secret_code}")  # Debugging
+            except Exception as e:
+                print(f"Erreur lors de l'envoi de l'email: {str(e)}")
+                return JsonResponse({'error': f"Erreur lors de l'envoi de l'email: {str(e)}"}, status=500)
 
-        # Stocker le code secret dans la session
-        request.session['secret_code'] = str(secret_code)
-        request.session['user_id'] = user.id
-        request.session.modified = True  # Assurez-vous que la session est sauvegardée
+            # Stocker le code secret dans la session
+            request.session['secret_code'] = str(secret_code)
+            request.session['user_id'] = user.id
+            request.session.modified = True  # Assurez-vous que la session est sauvegardée
 
-        print(f"Code de vérification généré : {secret_code}")  # Debugging
-        print(f"Session data after save: {request.session.items()}")  # Debugging
+            print(f"Code de vérification généré : {secret_code}")  # Debugging
+            print(f"Session data after save: {request.session.items()}")  # Debugging
 
-        response = JsonResponse({'message': 'Code de vérification envoyé'}, status=200)
-        response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='Lax')  # Set session cookie explicitly
+            response = JsonResponse({'message': 'Code de vérification envoyé'}, status=200)
+            response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='Lax')  # Set session cookie explicitly
 
-        return response
-    return JsonResponse({'error': 'Invalid credentials'}, status=400)
+            return response
+        else:
+            print("Invalid credentials")  # Debugging
+            return JsonResponse({'error': 'Invalid credentials'}, status=400)
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")  # Debugging
+        return JsonResponse({'error': f"Unexpected error: {str(e)}"}, status=500)
+
 
 @api_view(['POST'])
 def verify_2fa(request):
