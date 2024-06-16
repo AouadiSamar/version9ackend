@@ -111,8 +111,13 @@ from users.models import User
 
 
 
+from rest_framework import serializers
+from .models import Chargeback
+from rest_framework import serializers
 
-
+class ChargebackDataSerializer(serializers.Serializer):
+    month = serializers.DateField()
+    total_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 class ChargebackSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True)  # Assuming you have a FileSerializer
@@ -171,19 +176,22 @@ from rest_framework import serializers
 from rest_framework import serializers
 from .models import Comment
 
-class CommentSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
-    last_name = serializers.CharField(required=False)  # Ajouter ce champ pour le nom de l'utilisateur
+from rest_framework import serializers
+from .models import Comment
 
+class CommentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
     replies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    
     class Meta:
         model = Comment
-        
         fields = '__all__'
     
     def get_replies(self, obj):
         replies = obj.replies.all()
         return CommentSerializer(replies, many=True).data
+
 
 from rest_framework import serializers
 

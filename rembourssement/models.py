@@ -9,6 +9,7 @@ from django.conf import settings
 
 class Rembourssement(models.Model):
     is_active = models.BooleanField(default=True, help_text="Indicates whether the rembourssement is active or not.")
+    status = models.CharField(max_length=100)
 
 
     title = models.CharField(max_length=100)
@@ -51,6 +52,16 @@ class Rembourssement(models.Model):
         verbose_name = _("Rembourssement")
         verbose_name_plural = _("Rembourssement")
 
+    def toggle_active(self):
+        self.is_active = not self.is_active
+        self.save()
+
+    def __str__(self):
+        return f"Chargeback{self.title} - {self.authorization_number} - {self.status}"
+    
+    
+ 
+
     def __str__(self):
         return f"Rembourssement{self.title} - {self.authorization_number} - {self.status}"
     
@@ -60,20 +71,25 @@ class Rembourssement(models.Model):
 from django.db import models
 
 
+from users.models import User
 
 
 from django.db import models
 from django.conf import settings
-
 class Comment(models.Model):
     text = models.TextField()
+    rembourssement = models.ForeignKey(Rembourssement, on_delete=models.CASCADE, related_name='commentsrem')
+    user = models.ForeignKey(User, related_name='commentsrem',null=True, on_delete=models.CASCADE)  # Using the User model from your app
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
+    likes = models.PositiveIntegerField(default=0)
+    dislikes = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    rembourssement= models.ForeignKey(Rembourssement, related_name='commentss', on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, on_delete=models.CASCADE, related_name='commentss')
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.text[:50]
-
+        return self.text
 
 
     

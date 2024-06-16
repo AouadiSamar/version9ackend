@@ -206,21 +206,6 @@ from rest_framework.response import Response
 
 
 
-
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-
-    def perform_create(self, serializer):
-        rembourssement__id_id = self.kwargs.get('pk')  
-        rembourssement = get_object_or_404(Rembourssement, pk=rembourssement__id_id)
-        serializer.save(author=self.request.user, rembourssement=rembourssement)
-
-
-
-
-
-
 import logging
 logger = logging.getLogger(__name__)
 class RembourssementUpdateView(generics.UpdateAPIView):
@@ -296,26 +281,14 @@ class RembourssementDetailView(APIView):
 
 
 
-class CommentView(APIView):
-    def get(self, request, rembourssement__id_id):
-        comments = Comment.objects.filter(rembourssement__id_id=rembourssement__id_id)
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data)
+class ToggleActiveStatus(APIView):
+    def patch(self, request, rembourssement_id):
+        rembourssement = get_object_or_404(Rembourssement, id=rembourssement_id)
+        rembourssement.is_active = not rembourssement.is_active
+        rembourssement.save()
+        print(f"Rembourssement {rembourssement.id} new is_active status: {rembourssement.is_active}")
+        return Response({"success": True, "is_active": rembourssement.is_active}, status=status.HTTP_200_OK)
 
-
-    def post(self, request, rembourssement__id_id):
-        # Ensure context is passed here with the serializer instantiation
-        serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
-        if serializer.is_valid():
-            rembourssement = Rembourssement.objects.get(id=rembourssement__id_id)
-            try:
-                # Pass rembourssement directly to the save method if needed
-                serializer.save(rembourssement=rembourssement)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            except Exception as e:
-                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
 
@@ -355,52 +328,9 @@ class RembourssementLogsView(APIView):
             return Response({'message': 'No logs found'}, status=404)
         serializer = ActionLogSerializer(logs, many=True)
         return Response(serializer.data)
-
-
-
-class FileCreateView(generics.CreateAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-class FileListView(generics.ListAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-class FileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-
-class RembourssementCreateView(APIView):
-    def get(self, request):
-        rembourssements = Rembourssement.objects.all()
-        serializer = RembourssementSerializer(rembourssements, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = RembourssementSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-class FileUploadView(APIView):
-    def post(self, request, pk):
-        rembourssement = get_object_or_404(Rembourssement, pk=pk)
-        file_serializer = FileSerializer(data=request.data, context={'request': request})
-        
-        if file_serializer.is_valid():
-            file_serializer.save(rembourssement=rembourssement)  # Pass rembourssement to save method
-            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from django.shortcuts import get_object_or_404
 from .models import Rembourssement, File
 from .serializers import FileSerializer
@@ -415,9 +345,92 @@ class FileUploadView(APIView):
             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from .models import Rembourssement
+from .serializers import RembourssementDataSerializer
+
+@api_view(['GET'])
+def rembourssement_data(request):
+    try:
+        # Aggregate rembourssements by month
+        rembourssements = Rembourssement.objects.filter(is_active=True).annotate(month=TruncMonth('creation_date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+        
+        # Convert datetime to date
+        for rembourssement in rembourssements:
+            rembourssement['month'] = rembourssement['month'].date()  # Convert to date
+        
+        serializer = RembourssementDataSerializer(rembourssements, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FileCreateView(generics.CreateAPIView):
+    queryset = File.objects.all()
+    serializer_class = FileSerializer
+
+class FileListView(generics.ListAPIView):
+    queryset = File.objects.all()
+    serializer_class = FileSerializer
+
+class FileDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = File.objects.all()
+    serializer_class = FileSerializer
 
 
 
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Rembourssement
+from .serializers import RembourssementSerializer
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Rembourssement
+from .serializers import RembourssementSerializer
+import logging
+
+logger = logging.getLogger(__name__)
+
+class RembourssementCreateView(APIView):
+    def get(self, request):
+        try:
+            rembourssements = Rembourssement.objects.all()
+            serializer = RembourssementSerializer(rembourssements, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching rembourssements: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        try:
+            logger.info(f"Received data: {request.data}")  # Log the received data
+            serializer = RembourssementSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                logger.info(f"New Rembourssement Created: ID {serializer.data.get('id')}")
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                logger.error(f"Validation Error: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error creating rembourssement: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    
+
+
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import Rembourssement, File
+from .serializers import FileSerializer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -438,3 +451,121 @@ class ReactivateRembourssementView(APIView):
         rembourssement.is_active = True  # Set the rembourssement as active
         rembourssement.save()
         return Response({'status': 'Rembourssement reactivated'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
+from .models import Comment
+from .serializers import CommentSerializer
+
+class RembourssementCommentView(APIView):
+    def get(self, request, rembourssement_id):
+        comments = Comment.objects.filter(rembourssement_id=rembourssement_id)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, rembourssement_id):
+        serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
+        if serializer.is_valid():
+            user = request.user
+            serializer.validated_data['first_name'] = user.first_name
+            serializer.validated_data['last_name'] = user.last_name
+            serializer.validated_data['rembourssement_id'] = rembourssement_id
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id)
+            serializer = CommentSerializer(comment, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Comment.DoesNotExist:
+            return Response({"message": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id)
+            comment.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Comment.DoesNotExist:
+            return Response({"message": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RembourssementCommentListView(APIView):
+    def get(self, request, rembourssement_id):
+        comments = Comment.objects.filter(rembourssement_id=rembourssement_id, parent=None)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, rembourssement_id):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(rembourssement_id=rembourssement_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RembourssementCommentDetailView(APIView):
+    def get_object(self, comment_id):
+        try:
+            return Comment.objects.get(id=comment_id)
+        except Comment.DoesNotExist:
+            raise Http404
+
+    def get(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
+
+    def post(self, request, rembourssement_id):
+        serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
+        if serializer.is_valid():
+            user = request.user
+            serializer.validated_data['first_name'] = user.first_name
+            serializer.validated_data['last_name'] = user.last_name
+            serializer.validated_data['rembourssement_id'] = rembourssement_id
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)  # Print the validation errors to the console
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RembourssementCommentLikeView(APIView):
+    def post(self, request, comment_id, format=None):
+        comment = Comment.objects.get(id=comment_id)
+        comment.likes += 1
+        comment.save()
+        return Response({'status': 'comment liked'}, status=status.HTTP_200_OK)
+
+
+class RembourssementCommentDislikeView(APIView):
+    def post(self, request, comment_id, format=None):
+        comment = Comment.objects.get(id=comment_id)
+        comment.dislikes += 1
+        comment.save()
+        return Response({'status': 'comment disliked'}, status=status.HTTP_200_OK)
+
+
+class RembourssementCommentReplyView(APIView):
+    def post(self, request, comment_id, format=None):
+        parent_comment = Comment.objects.get(id=comment_id)
+        text = request.data.get('text')
+        reply_comment = Comment.objects.create(text=text, rembourssement=parent_comment.rembourssement, parent=parent_comment)
+        serializer = CommentSerializer(reply_comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

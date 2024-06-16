@@ -15,20 +15,23 @@ from django.urls import path
 
 # urls.py
 
-from .views import AssignChargebackView
+from .views import AssignChargebackView ,chargeback_data
 
 
-from .views import CommentListView, CommentDetailView, CommentLikeView, CommentDislikeView, CommentReplyView
+from .views import CommentView, CommentLikeView, CommentDislikeView, CommentReplyView
 
 from django.urls import path
 
 
+
+from .views import CommentView, CommentLikeView, CommentDislikeView, CommentReplyView
+
 urlpatterns = [
-    path('chargebacks/<int:chargeback_id>/comments/', CommentListView.as_view(), name='chargeback-comments'),
-    path('comments/<int:comment_id>/', CommentDetailView.as_view(), name='comment-detail'),
+    path('chargebacks/<int:chargeback_id>/comments/', CommentView.as_view(), name='chargeback-comments'),
     path('comments/<int:comment_id>/like/', CommentLikeView.as_view(), name='comment-like'),
     path('comments/<int:comment_id>/dislike/', CommentDislikeView.as_view(), name='comment-dislike'),
     path('comments/<int:comment_id>/reply/', CommentReplyView.as_view(), name='comment-reply'),
+    path('comments/<int:comment_id>/', CommentView.as_view(), name='comment-detail'),
 
      path('chargebacks/<int:pk>/assign/', AssignChargebackView.as_view(), name='assign-chargeback'),
     path('chargebacks/<int:chargeback_id>/ac_des/', ToggleActiveStatus.as_view(), name='toggle-chargeback-active'),
@@ -37,8 +40,6 @@ urlpatterns = [
 
 
 
-    path('chargebacks/<int:chargeback_id>/comments', CommentView.as_view(), name='chargeback-comments'),
-    path('comments/<int:comment_id>/', CommentView.as_view()),  
 
     path('chargebacks/', ChargebackCreateView.as_view(), name='chargeback-create'),
     path('chargebacks/<int:pk>/assign/', AssignChargebackView.as_view(), name='assign-chargeback'),
@@ -48,6 +49,7 @@ urlpatterns = [
 path('chargebacks/list/', ChargebackListView.as_view(), name='chargeback-list'),
     path('chargebacks/<int:pk>/edit/', ChargebackUpdateView.as_view(), name='chargeback-update'),
     path('files/<int:pk>/delete/', delete_file, name='delete-file'),
+    path('chargebacks/data/', chargeback_data, name='chargeback-data'),
 
 
     path('chargebacks/<int:pk>/', ChargebackDetailView.as_view(), name='chargeback-detail'),

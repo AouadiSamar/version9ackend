@@ -723,14 +723,19 @@ class CommentDetailView(APIView):
         comment = self.get_object(comment_id)
         serializer = CommentSerializer(comment)
         return Response(serializer.data)
-
-    def put(self, request, comment_id, format=None):
-        comment = self.get_object(comment_id)
-        serializer = CommentSerializer(comment, data=request.data)
+  
+    def post(self, request, chargeback_id):
+        serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
         if serializer.is_valid():
+            user = request.user
+            serializer.validated_data['first_name'] = user.first_name
+            serializer.validated_data['last_name'] = user.last_name
+            serializer.validated_data['chargeback_id'] = chargeback_id
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)  # Print the validation errors to the console
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, comment_id, format=None):
         comment = self.get_object(comment_id)
@@ -761,4 +766,35 @@ class CommentReplyView(APIView):
         reply_comment = Comment.objects.create(text=text, chargeback=parent_comment.chargeback, parent=parent_comment)
         serializer = CommentSerializer(reply_comment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from .models import Chargeback
+from .serializers import ChargebackDataSerializer
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from .models import Chargeback
+from .serializers import ChargebackDataSerializer
+from datetime import date
+
+@api_view(['GET'])
+def chargeback_data(request):
+    try:
+        # Aggregate chargebacks by month
+        chargebacks = Chargeback.objects.filter(is_active=True).annotate(month=TruncMonth('creation_date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+        
+        # Convert datetime to date
+        for chargeback in chargebacks:
+            chargeback['month'] = chargeback['month'].date()  # Convert to date
+        
+        serializer = ChargebackDataSerializer(chargebacks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -2,21 +2,35 @@ from datetime import timedelta
 from pathlib import Path
 import os
 import environ
-import dj_database_url
 
 env = environ.Env(DEBUG=(bool, False))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Reading .env file
 environ.Env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = ["*", "localhost"]
+APPEND_SLASH = False
+ALLOWED_HOSTS = []
 
+# CORS configuration
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+CORS_ALLOW_ALL_ORIGINS = True  # Not recommended for production
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -24,39 +38,25 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework_simplejwt",
     'rest_framework',
-    'corsheaders',
     'chargebacks.apps.ChargebacksConfig',
     'rembourssement.apps.RembourssementConfig',
-    'users.apps.UsersConfig',  # Updated to reference the configuration class
+    'corsheaders',
+    'users.apps.UsersConfig',
     'djoser',
 ]
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-]
 
-MIDDLEWARE = [  
-
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware should be before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
-
-# Session and Cookie configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 5000
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_SECURE = True  # Use True in production with HTTPS
-SESSION_COOKIE_SAMESITE = None
-CSRF_COOKIE_SECURE = True  # Use True in production with HTTPS
-CSRF_COOKIE_SAMESITE = None
 
 ROOT_URLCONF = 'Paymee.urls'
 
@@ -78,37 +78,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Paymee.wsgi.application'
 
+# Database
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'Paymee123',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
 
-# Email configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 3600  # 30 minutes, en secondes
+SESSION_SAVE_EVERY_REQUEST = True
 
-# REST framework configuration
+# settings.py
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = False  # Assurez-vous que cela est adapté à votre environnement (True pour HTTPS)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-}
-
-SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': env("SIGNING_KEY"),
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'JTI_CLAIM': 'jti',
 }
 
 # Custom user model
@@ -137,16 +133,12 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# JWT configuration
 
 # Logging configuration
 LOGGING = {
@@ -167,7 +159,7 @@ LOGGING = {
 }
 
 # Djoser configuration
-DOMAIN = 'https://samar-cdd4a.web.app'
+DOMAIN = 'localhost:5173'
 DJOSER = {
     'LOGIN_FIELD': 'email',
     "USER_CREATE_PASSWORD_RETYPE": True,
@@ -187,29 +179,25 @@ DJOSER = {
         'user_delete': "djoser.serializers.UserDeleteSerializer",
     },
 }
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': env("SIGNING_KEY"),
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
+}
 
-# CORS and CSRF settings
-CSRF_TRUSTED_ORIGINS = [
-    'https://samar-cdd4a.web.app',
-    'http://localhost:5173',
-]
-
-CORS_ALLOWED_ORIGINS = [
-    'https://samar-cdd4a.web.app',
-    'http://localhost:5173',
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_HEADERS = [
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials',
-    'Content-Type',
-    'Authorization',
-]
-
+# Email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'samaraouadi7@gmail.com'
@@ -217,3 +205,11 @@ EMAIL_HOST_PASSWORD = 'pzer odyv mqnr oqsp'
 DEFAULT_FROM_EMAIL = 'samaraouadi7@gmail.com'
 
 # Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Site name
+SITE_NAME = "Paymee"
+
+# Ensure environment variables are loaded
+env.read_env()

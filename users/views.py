@@ -98,6 +98,15 @@ class ProfileView(serializers.ModelSerializer):
 
 
 
+import random
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import JsonResponse
+from users.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 def send_verification_email(to_email, code):
@@ -106,6 +115,15 @@ def send_verification_email(to_email, code):
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [to_email]
     send_mail(subject, message, email_from, recipient_list)
+import random
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import JsonResponse
+from users.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 
 @api_view(['POST'])
 def login_with_2fa(request):
@@ -139,14 +157,13 @@ def login_with_2fa(request):
 def verify_2fa(request):
     secret_code = request.data.get('secret_code')
     stored_code = request.session.get('secret_code')
-    user_id = request.session.get('user_id')
-    
     print(f"Code de vérification soumis : {secret_code}")  # Debugging
     print(f"Code de vérification stocké : {stored_code}")  # Debugging
     print(f"Session data at verify: {request.session.items()}")  # Debugging
     print(f"Cookies: {request.COOKIES}")  # Debugging
 
     if secret_code == stored_code:
+        user_id = request.session.get('user_id')
         user = User.objects.get(id=user_id)
 
         # Générer et retourner les tokens JWT
@@ -396,7 +413,7 @@ class SendResetEmailView(APIView):
             token_generator = PasswordResetTokenGenerator()
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_link = f"https://samar-cdd4a.web.app/reset-password-form/{uid}/{token}"
+            reset_link = f"http://localhost:5173/reset-password-form/{uid}/{token}"
 
             subject = "Reset Your Password :Paymee"
             message = f"You're receiving this email because you requested a password reset for your user account at Paymee.Please go to the following page and choose a new password:{reset_link}"

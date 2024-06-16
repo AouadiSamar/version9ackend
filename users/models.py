@@ -69,6 +69,8 @@ from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 
 class User(AbstractBaseUser, PermissionsMixin):
+    role = models.CharField(max_length=50, null=True,choices=[('admin', 'Admin'), ('user', 'User')])
+
     email = models.EmailField(_("Email Address"), unique=True)
     first_name = models.CharField(_("First Name"), max_length=100)
     last_name = models.CharField(_("Last Name"), max_length=100)
