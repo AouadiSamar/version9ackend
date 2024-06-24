@@ -301,6 +301,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 
+from rest_framework import status
 
 import logging
 logger = logging.getLogger(__name__)
@@ -317,6 +318,9 @@ def update(self, request, *args, **kwargs):
     serializer.is_valid(raise_exception=True)
     self.perform_update(serializer)
     return Response(serializer.data)
+
+
+
 import os
 import joblib
 import pandas as pd
@@ -331,7 +335,7 @@ from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
-class PredictResolutionTimeView(APIView):
+class PredictResolutionTime(APIView):
     def post(self, request):
         model_path = os.path.join(settings.BASE_DIR, 'models', 'chargeback_resolution_model.pkl')
         logger.debug(f"Model path: {model_path}")
@@ -402,8 +406,6 @@ class PredictResolutionTimeView(APIView):
             import traceback
             traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 
 
@@ -742,21 +744,29 @@ class CommentDetailView(APIView):
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Comment
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Comment
 
 class CommentLikeView(APIView):
     def post(self, request, comment_id, format=None):
         comment = Comment.objects.get(id=comment_id)
-        comment.likes += 1
+        user = request.user
+        if user in comment.liked_users.all():
+            comment.liked_users.remove(user)
+            comment.likes -= 1
+            liked = False
+        else:
+            comment.liked_users.add(user)
+            comment.likes += 1
+            liked = True
         comment.save()
-        return Response({'status': 'comment liked'}, status=status.HTTP_200_OK)
-
-
-class CommentDislikeView(APIView):
-    def post(self, request, comment_id, format=None):
-        comment = Comment.objects.get(id=comment_id)
-        comment.dislikes += 1
-        comment.save()
-        return Response({'status': 'comment disliked'}, status=status.HTTP_200_OK)
+        return Response({'status': 'success', 'liked': liked, 'likes': comment.likes}, status=status.HTTP_200_OK)
 
 
 class CommentReplyView(APIView):

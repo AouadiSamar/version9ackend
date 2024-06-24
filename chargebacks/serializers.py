@@ -182,6 +182,8 @@ from .models import Comment
 class CommentSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+
     replies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     
     class Meta:

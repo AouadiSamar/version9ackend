@@ -43,6 +43,8 @@ from rest_framework import serializers
 from .models import Comment
 
 class CommentSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(read_only=True)
+
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     replies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)

@@ -352,7 +352,12 @@ from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from .models import Rembourssement
 from .serializers import RembourssementDataSerializer
+from django.http import FileResponse
 
+def download_file(request, file_id):
+    file_obj = get_object_or_404(File, id=file_id)
+    response = FileResponse(file_obj.file.open(), as_attachment=True, filename=file_obj.file.name)
+    return response
 @api_view(['GET'])
 def rembourssement_data(request):
     try:
@@ -514,6 +519,20 @@ class RembourssementCommentListView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
+from .models import Comment
+from .serializers import CommentSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from .models import Comment
+from .serializers import CommentSerializer
 
 class RembourssementCommentDetailView(APIView):
     def get_object(self, comment_id):
@@ -526,6 +545,14 @@ class RembourssementCommentDetailView(APIView):
         comment = self.get_object(comment_id)
         serializer = CommentSerializer(comment)
         return Response(serializer.data)
+
+    def put(self, request, comment_id, format=None):
+        comment = self.get_object(comment_id)
+        serializer = CommentSerializer(comment, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, rembourssement_id):
         serializer = CommentSerializer(data=request.data, context={'request': request, 'view': self})
@@ -546,26 +573,27 @@ class RembourssementCommentDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import Comment
 class RembourssementCommentLikeView(APIView):
     def post(self, request, comment_id, format=None):
         comment = Comment.objects.get(id=comment_id)
-        comment.likes += 1
+        user = request.user
+        if user in comment.liked_users.all():
+            comment.liked_users.remove(user)
+            comment.likes -= 1
+            liked = False
+        else:
+            comment.liked_users.add(user)
+            comment.likes += 1
+            liked = True
         comment.save()
-        return Response({'status': 'comment liked'}, status=status.HTTP_200_OK)
+        return Response({'status': 'success', 'liked': liked, 'likes': comment.likes}, status=status.HTTP_200_OK)
 
-
-class RembourssementCommentDislikeView(APIView):
-    def post(self, request, comment_id, format=None):
-        comment = Comment.objects.get(id=comment_id)
-        comment.dislikes += 1
-        comment.save()
-        return Response({'status': 'comment disliked'}, status=status.HTTP_200_OK)
-
-
-class RembourssementCommentReplyView(APIView):
-    def post(self, request, comment_id, format=None):
-        parent_comment = Comment.objects.get(id=comment_id)
-        text = request.data.get('text')
-        reply_comment = Comment.objects.create(text=text, rembourssement=parent_comment.rembourssement, parent=parent_comment)
-        serializer = CommentSerializer(reply_comment)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)

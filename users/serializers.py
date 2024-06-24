@@ -114,7 +114,6 @@ from .models import User, Role
 
 from rest_framework import permissions 
 
-
 class UserSerializer(serializers.ModelSerializer):
     role_names = serializers.SerializerMethodField()
 
@@ -125,25 +124,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_role_names(self, obj):
         return [role.name for role in obj.roles.all()]
-    
-
 
     def create(self, validated_data):
         roles_data = validated_data.pop('roles', [])
-        # Générer un mot de passe aléatoire fort pour l'utilisateur
-        password = get_random_string(length=10)  # Ajustez la longueur selon les besoins
-        
-        # Créer l'utilisateur avec les données validées, sans définir le mot de passe pour l'instant
+        password = get_random_string(length=10)
         user = User.objects.create(**validated_data)
-        # Définir le mot de passe aléatoire généré pour l'utilisateur
         user.set_password(password)
         user.save()
-        
-        # Affecter les rôles à l'utilisateur, si applicable dans votre cas d'utilisation
         user.roles.set(roles_data)
         user.save()
 
-        # Envoyer un e-mail de bienvenue à l'utilisateur, incluant le mot de passe aléatoire
         subject = 'Bienvenue chez Paymee'
         message = f'Bonjour {user.first_name},\n\nVotre compte a été créé avec succès.\n\nEmail: {user.email}\nMot de passe: {password}\n\nMerci.\n\nPaymee Team'
         email_from = settings.EMAIL_HOST_USER
@@ -151,20 +141,15 @@ class UserSerializer(serializers.ModelSerializer):
         send_mail(subject, message, email_from, recipient_list, fail_silently=False)
 
         return user
-    
+
     def update(self, instance, validated_data):
         roles_data = validated_data.pop('roles', None)
-        print("oo")
         if roles_data is not None:
-            print("aa")
             instance.roles.set(roles_data)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         return instance
-    
-
-
 
 
     # serializers.py

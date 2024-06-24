@@ -13,9 +13,8 @@ from .views import (
 from django.urls import path
 
 from .views import (
-    RembourssementCommentView, RembourssementCommentListView,
+    RembourssementCommentView,download_file,  RembourssementCommentListView,
     RembourssementCommentDetailView, RembourssementCommentLikeView,
-    RembourssementCommentDislikeView, RembourssementCommentReplyView
 )
 
 from django.urls import path
@@ -23,13 +22,12 @@ from django.urls import path
 urlpatterns = [
 
 
+    path('rembourssement/comments/<int:comment_id>/', RembourssementCommentDetailView.as_view(), name='comment-detail'),
 
     path('rembourssement/<int:rembourssement_id>/comments/', RembourssementCommentView.as_view(), name='rembourssement-comments'),
     path('rembourssement/<int:rembourssement_id>/comments/list/', RembourssementCommentListView.as_view(), name='rembourssement-comments-list'),
     path('rembourssement/comments/<int:comment_id>/', RembourssementCommentDetailView.as_view(), name='rembourssement-comment-detail'),
-    path('rembourssement/comments/<int:comment_id>/like/', RembourssementCommentLikeView.as_view(), name='rembourssement-comment-like'),
-    path('rembourssement/comments/<int:comment_id>/dislike/', RembourssementCommentDislikeView.as_view(), name='rembourssement-comment-dislike'),
-    path('rembourssement/comments/<int:comment_id>/reply/', RembourssementCommentReplyView.as_view(), name='rembourssement-comment-reply'),
+    path('comments/<int:comment_id>/lik/', RembourssementCommentLikeView.as_view(), name='rembourssement-comment-like'),
 
 
     path('rembourssement/',RembourssementCreateView.as_view(), name='rembourssement-create'),
@@ -63,6 +61,7 @@ urlpatterns = [
     path('files/', FileListView.as_view(), name='file-list'),
     path('files/<int:pk>/', FileDetailView.as_view(), name='file-detail'),
 
+    path('files/<int:file_id>/download/', download_file, name='file-download'),
 
 
     path('rembourssement/<int:pk>/logs/',RembourssementLogsView.as_view(), name='rembourssement-logs'),

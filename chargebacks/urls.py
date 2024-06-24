@@ -3,7 +3,7 @@ from .views import ChargebackCreateView,AssignChargebackView, CommentView, Charg
 from .views import  ChargebackStatusUpdateView,ChargebackLogsView
 from .views import ChargebackLogsView ,delete_file,download_file
 
-from .views import ToggleActiveStatus,PredictResolutionTimeView
+from .views import ToggleActiveStatus,PredictResolutionTime
 # urls.py
 from django.urls import path
 from .views import FileUploadView, FileDetailView
@@ -18,25 +18,24 @@ from django.urls import path
 from .views import AssignChargebackView ,chargeback_data
 
 
-from .views import CommentView, CommentLikeView, CommentDislikeView, CommentReplyView
+from .views import CommentView, CommentLikeView,  CommentReplyView
 
 from django.urls import path
 
 
 
-from .views import CommentView, CommentLikeView, CommentDislikeView, CommentReplyView
+from .views import CommentView, CommentLikeView,  CommentReplyView
 
 urlpatterns = [
     path('chargebacks/<int:chargeback_id>/comments/', CommentView.as_view(), name='chargeback-comments'),
     path('comments/<int:comment_id>/like/', CommentLikeView.as_view(), name='comment-like'),
-    path('comments/<int:comment_id>/dislike/', CommentDislikeView.as_view(), name='comment-dislike'),
     path('comments/<int:comment_id>/reply/', CommentReplyView.as_view(), name='comment-reply'),
     path('comments/<int:comment_id>/', CommentView.as_view(), name='comment-detail'),
 
      path('chargebacks/<int:pk>/assign/', AssignChargebackView.as_view(), name='assign-chargeback'),
     path('chargebacks/<int:chargeback_id>/ac_des/', ToggleActiveStatus.as_view(), name='toggle-chargeback-active'),
     # path('chargebacks/<int:chargeback_id>/send-email/', send_email_to_merchant, name='send-email-to-merchant'),
-    path('chargebacks/predict_resolution_time/', PredictResolutionTimeView.as_view(), name='predict-resolution-time'),
+    path('chargebacks/predict/', PredictResolutionTime.as_view(), name='predict-resolution-time'),
 
 
 

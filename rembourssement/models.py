@@ -84,8 +84,9 @@ class Comment(models.Model):
     last_name = models.CharField(max_length=100, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
     likes = models.PositiveIntegerField(default=0)
-    dislikes = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    liked_users = models.ManyToManyField(User, related_name='likecommentt', blank=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

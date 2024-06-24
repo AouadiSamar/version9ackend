@@ -28,6 +28,15 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
 
+    def delete_model(self, request, obj):
+        try:
+            obj.delete()
+        except User.DoesNotExist:
+            self.message_user(request, "The user does not exist.", level='error')
+        except Exception as e:
+            self.message_user(request, f"An error occurred: {e}", level='error')
+
+
 # Admin for Role
 class RoleAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')

@@ -15,19 +15,6 @@ def log_rembourssement_save(sender, instance, created, **kwargs):
         user=instance.created_by if hasattr(instance, 'created_by') else None
     )
 
-@receiver(post_delete, sender=Rembourssement)
-def log_rembourssement_delete(sender, instance, **kwargs):
-    # Assuming instance.created_by is available; adjust based on your user tracking setup
-    ActionLog.objects.create(
-        rembourssement=instance,
-        action="Deleted",
-        user=instance.created_by if hasattr(instance, 'created_by') else None
-    )
-
-
-
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from .models import Rembourssement
@@ -43,11 +30,7 @@ def send_notification_on_change(sender, instance, created, **kwargs):
     
     send_notification_email(subject, message)
 
-@receiver(post_delete, sender=Rembourssement)
-def send_notification_on_delete(sender, instance, **kwargs):
-    subject = f'Rembourssement Deleted: ID {instance.id}'
-    message = f'The rembourssement with ID {instance.id} has been deleted.'
-    send_notification_email(subject, message)
+
 
 def send_notification_email(subject, message):
     User = get_user_model()

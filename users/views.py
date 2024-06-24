@@ -129,51 +129,55 @@ from rest_framework_simplejwt.tokens import RefreshToken
 def login_with_2fa(request):
     email = request.data.get('email')
     password = request.data.get('password')
+    print(f"Received login request with email: {email}, password: {password}")  # Log email et mot de passe
     user = authenticate(request, email=email, password=password)
+    
     if user is not None:
-        # Générer un code secret à 6 chiffres
         secret_code = random.randint(100000, 999999)
-
-        # Envoyer le code secret par email
         try:
             send_verification_email(user.email, secret_code)
         except Exception as e:
             return JsonResponse({'error': f"Erreur lors de l'envoi de l'email: {str(e)}"}, status=500)
 
-        # Stocker le code secret dans la session
         request.session['secret_code'] = str(secret_code)
         request.session['user_id'] = user.id
-        request.session.modified = True  # Assurez-vous que la session est sauvegardée
-        print(f"Code de vérification généré : {secret_code}")  # Debugging
-        print(f"Session data after save: {request.session.items()}")  # Debugging
+        request.session.modified = True
 
         response = JsonResponse({'message': 'Code de vérification envoyé'}, status=200)
-        response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='Lax')  # Set session cookie explicitly
+        response.set_cookie('sessionid', request.session.session_key, httponly=True, samesite='Lax')
+        print(f"Verification code sent: {secret_code}")  # Log le code de vérification
 
         return response
+    
+    print("Authentication failed")  # Log si l'authentification échoue
     return JsonResponse({'error': 'Invalid credentials'}, status=400)
+
 
 @api_view(['POST'])
 def verify_2fa(request):
     secret_code = request.data.get('secret_code')
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return JsonResponse({'error': 'Session expired or invalid'}, status=400)
+    
+    user = User.objects.get(id=user_id)
+    
     stored_code = request.session.get('secret_code')
-    print(f"Code de vérification soumis : {secret_code}")  # Debugging
-    print(f"Code de vérification stocké : {stored_code}")  # Debugging
-    print(f"Session data at verify: {request.session.items()}")  # Debugging
-    print(f"Cookies: {request.COOKIES}")  # Debugging
-
-    if secret_code == stored_code:
-        user_id = request.session.get('user_id')
-        user = User.objects.get(id=user_id)
-
-        # Générer et retourner les tokens JWT
-        refresh = RefreshToken.for_user(user)
-        update_last_login(None, user)
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }, status=status.HTTP_200_OK)
-    return Response({'error': 'Invalid verification code'}, status=status.HTTP_400_BAD_REQUEST)
+    if stored_code != secret_code:
+        return JsonResponse({'error': 'Invalid verification code'}, status=400)
+    
+    refresh = RefreshToken.for_user(user)
+    access = refresh.access_token
+    
+    # Supprimez le code de vérification de la session après la vérification réussie
+    del request.session['secret_code']
+    del request.session['user_id']
+    
+    return JsonResponse({
+        'refresh': str(refresh),
+        'access': str(access),
+    }, status=200)
 
 
 
@@ -200,7 +204,19 @@ class UserListView(APIView):
 
 
 
-class UserDetailView(APIView):
+from rest_framework import generics, permissions
+from .models import User
+from .serializers import UserSerializer
+
+class UserDetailView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+
+
+class UserDetailViewU(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
@@ -210,18 +226,10 @@ class UserDetailView(APIView):
         return Response(serializer.data)
 
 
-
-
-
 class UserUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
-
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    # If needed, override the update method or perform any additional logic here
-
-
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -230,8 +238,9 @@ class UserUpdateView(generics.UpdateAPIView):
         self.perform_update(serializer)
 
         if getattr(serializer.instance, '_prefetched_objects_cache', None):
-            # we need to invalidate the prefetch cache on the instance.
             serializer.instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
         return Response(serializer.data)
 
@@ -273,16 +282,43 @@ class UserUpdateView(generics.UpdateAPIView):
 
 
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
-class UserDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from users.models import User
 
-    def delete(self, request, *args, **kwargs):
-        pk = kwargs.get('pk')
-        user = get_object_or_404(User, pk=pk)
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from users.models import User
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from users.models import User
+
+@require_POST
+def delete_user(request):
+    user_id = request.POST.get('user_id')
+    if not user_id:
+        return JsonResponse({'error': 'User ID not provided'}, status=400)
+
+    try:
+        print(f"Trying to delete user with ID: {user_id}")  # Log l'ID de l'utilisateur
+        user = User.objects.get(id=user_id)
         user.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        print(f"User with ID {user_id} deleted successfully")
+        return JsonResponse({'message': 'User deleted successfully'}, status=200)
+    except User.DoesNotExist:
+        print(f"User with ID {user_id} does not exist")
+        return JsonResponse({'error': 'User does not exist'}, status=404)
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 
 
@@ -401,6 +437,16 @@ class ResetPasswordConfirm(APIView):
         user.save()
         return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
 
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
 
 class SendResetEmailView(APIView):
     def post(self, request, *args, **kwargs):
@@ -427,7 +473,6 @@ class SendResetEmailView(APIView):
                 return Response({"error": f"Failed to send email. Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 

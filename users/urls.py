@@ -1,11 +1,11 @@
 from django.urls import path
 from . import views
-from .views import ResetPasswordConfirm, SendResetEmailView, ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView
+from .views import ResetPasswordConfirm, delete_user,SendResetEmailView, ProfileView,UserView,UserListView, PermissionListView ,UserDetailView, UserCreateView, UserUpdateView, RoleCreateView,RoleListView
 
 from django.urls import path
 from .views import login_with_2fa, verify_2fa
 
-from .views import ToggleUserActiveStatus
+from .views import ToggleUserActiveStatus, UserDetailViewU
 
 urlpatterns = [
 
@@ -15,11 +15,11 @@ urlpatterns = [
 
     path('login/2fa/', login_with_2fa, name='login_with_2fa'),
     path('login/verify/', verify_2fa, name='verify_2fa'),
-    # Ajoutez d'autres chemins d'URL ici
+    path('admin/users/user/delete/', delete_user, name='admin-user-delete'),
 
-    
+        path('send-reset-email/', SendResetEmailView.as_view(), name='send_reset_email'),
+
     path('active-sessions/', views.active_sessions, name='active_sessions'),
-    path('send-reset-email/', SendResetEmailView.as_view(), name='send_reset_email'),
 
     path('terminate-session/<str:session_key>/', views.terminate_session, name='terminate_session'),
 
@@ -37,7 +37,7 @@ urlpatterns = [
 
 
 
-    path('profile/', UserDetailView.as_view(), name='user-profile'),
+    path('profile/', UserDetailViewU.as_view(), name='user-profile'),
 
     path('users/', UserListView.as_view(), name='user-list'),
     path('update/<int:pk>/', UserUpdateView.as_view(), name='user-update'),
